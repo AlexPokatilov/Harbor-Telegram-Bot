@@ -1,15 +1,12 @@
-# Етап 1: Збірка програми
 FROM golang:latest as builder
 WORKDIR /app
 COPY go.mod ./
-# go.sum не використовується, оскільки немає зовнішніх залежностей
 RUN go mod download
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o harbor-bot .
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o harbor-telegram-bot .
 
-# Етап 2: Створення кінцевого образу
-FROM alpine:latest
+FROM alpine:latest as bot
 RUN apk --no-cache add ca-certificates
 WORKDIR /root/
-COPY --from=builder /app/harbor-bot .
-CMD ["./harbor-bot"]
+COPY --from=builder /app/harbor-telegram-bot .
+CMD ["./harbor-telegram-bot"]
