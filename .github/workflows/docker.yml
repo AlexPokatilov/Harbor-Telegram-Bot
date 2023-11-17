@@ -38,7 +38,7 @@ jobs:
         with:
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/harbor-telegram-bot:${{ github.event_name }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/harbor-telegram-bot:${{ github.action_ref }}
         if: github.event_name == 'release'
       - name: Release
         uses: docker/build-push-action@v5.1.0
