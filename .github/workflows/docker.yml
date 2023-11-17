@@ -33,12 +33,16 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/harbor-telegram-bot:build-${{ github.run_number }}
         if: github.event_name == 'pull_request' && github.ref == 'refs/heads/main'
+      - name: Extract tag name
+        id: extract_tag
+        run: echo "##[set-output name=tag;]$(echo ${GITHUB_REF#refs/tags/})"
+        if: startsWith(github.ref, 'refs/tags/')
       - name: Pre-Release
         uses: docker/build-push-action@v5.1.0
         with:
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/harbor-telegram-bot:${{ github.action_ref }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/harbor-telegram-bot:${{ steps.extract_tag.outputs.tag }}
         if: github.event_name == 'release'
       - name: Release
         uses: docker/build-push-action@v5.1.0
