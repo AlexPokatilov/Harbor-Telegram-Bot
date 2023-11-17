@@ -16,7 +16,7 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
     steps:
-      - name: Clone FoodManager-Backend repository
+      - name: Clone git repository
         uses: actions/checkout@v4.1.1
         with:
           fetch-depth: 0
@@ -39,7 +39,7 @@ jobs:
           push: true
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/harbor-telegram-bot:${{ env.GITHUB_RELEASE_TAG }}
-        if: github.event_name == 'release' && github.event.release.prereleased == true
+        if: github.event_name == 'release'
       - name: Release
         uses: docker/build-push-action@v5.1.0
         with:
