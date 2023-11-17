@@ -50,5 +50,5 @@ jobs:
         uses: docker/build-push-action@v5.1.0
         with:
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/harbor-telegram-bot:${{ vars.version }}.{{ github.run_number }}
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/harbor-telegram-bot:${{ vars.version }}.${{ github.run_number }}
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
