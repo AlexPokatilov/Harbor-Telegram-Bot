@@ -57,7 +57,6 @@ func initTelegramBot() {
     }
 
     bot.Debug = debugModeBool
-    log.Printf("Launching...")
     log.Printf("OK! Connected to telegram bot account: https://t.me/%s", bot.Self.UserName)
 }
 

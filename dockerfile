@@ -9,4 +9,5 @@ FROM alpine:latest as bot
 RUN apk --no-cache add ca-certificates
 WORKDIR /root/
 COPY --from=builder /app/harbor-telegram-bot .
+EXPOSE 441:441
 CMD ["./harbor-telegram-bot"]
