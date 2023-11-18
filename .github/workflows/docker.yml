@@ -1,15 +1,5 @@
 name: Docker Release
 on:
-  push:
-    branches: [ "main" ]
-    paths-ignore:
-      - "README.md"
-      - "README/*.png"
-      - "README/*.svg"
-      - "README/*.jpeg"
-      - "README/*.jpg"
-      - "README/*.md"
-      - "LICENSE"
   pull_request:
     branches: [ "main" ]
     paths-ignore:
