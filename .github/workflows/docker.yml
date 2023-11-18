@@ -1,7 +1,15 @@
 name: Docker Release
 on:
-  release:
-    types: [prereleased, released]
+  push:
+    branches: [ "main" ]
+    paths-ignore:
+      - "README.md"
+      - "README/*.png"
+      - "README/*.svg"
+      - "README/*.jpeg"
+      - "README/*.jpg"
+      - "README/*.md"
+      - "LICENSE"
   pull_request:
     branches: [ "main" ]
     paths-ignore:
@@ -20,35 +28,16 @@ jobs:
         uses: actions/checkout@v4.1.1
         with:
           fetch-depth: 0
-        if: github.event_name == 'pull_request' && github.ref == 'refs/heads/main'
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-        if: github.event_name == 'pull_request' && github.ref == 'refs/heads/main'
       - name: Push
         uses: docker/build-push-action@v5.1.0
         with:
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/harbor-telegram-bot:build-${{ github.run_number }}
-        if: github.event_name == 'pull_request' && github.ref == 'refs/heads/main'
-      - name: Extract tag name
-        id: extract_tag
-        run: echo "##[set-output name=tag;]$(echo ${GITHUB_REF#refs/tags/})"
-        if: startsWith(github.ref, 'refs/tags/')
-      - name: Pre-Release
-        uses: docker/build-push-action@v5.1.0
-        with:
-          push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/harbor-telegram-bot:${{ steps.extract_tag.outputs.tag }}
-        if: github.event_name == 'release'
-      - name: Release
-        uses: docker/build-push-action@v5.1.0
-        with:
-          push: true
-          tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/harbor-telegram-bot:${{ env.GITHUB_RELEASE_TAG }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/harbor-telegram-bot:build-${{ github.run_number }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/harbor-telegram-bot:1.0
             ${{ secrets.DOCKERHUB_USERNAME }}/harbor-telegram-bot:latest
-        if: github.event_name == 'release' && github.event.release.released == true
