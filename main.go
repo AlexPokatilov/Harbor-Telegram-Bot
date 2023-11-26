@@ -52,7 +52,7 @@ func initTelegramBot() {
     debugModeStr := os.Getenv("DEBUG_MODE")     //true - hide data, false - show data
     debugModeBool, err := strconv.ParseBool(debugModeStr)
     if err != nil {
-    log.Printf("Error converting DEBUG_MODE to bool: %v", err)
+    log.Printf("ERROR!!! When converting DEBUG_MODE to bool: %v", err)
     return
     }
 
@@ -108,7 +108,7 @@ func handleWebhook(w http.ResponseWriter, r *http.Request) {
     chatIdStr := os.Getenv("CHAT_ID")
     chatIdInt, err := strconv.ParseInt(chatIdStr, 10, 64)
     if err != nil {
-    log.Printf("Error converting chat ID to int64: %v", err)
+    log.Printf("ERROR!!! When converting chat ID to int64: %v", err)
     return
     }
 
