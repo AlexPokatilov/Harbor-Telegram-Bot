@@ -12,6 +12,7 @@ Harbor - Telegram bot. Notify about new image pushes to harbor container registr
 
 ### Pre-requirements
 
+- Harbor 2.7.x
 - Create Telegram Bot with [BotFather](https://core.telegram.org/bots/features#botfather).
 - Get Bot API Token.
 - Get your ChatID (example):
@@ -72,6 +73,24 @@ Harbor - Telegram bot. Notify about new image pushes to harbor container registr
 ### Releases
 
 - [Docker Hub](https://hub.docker.com/r/alexpokatilov/harbor-telegram-bot)
+
+### Development
+
+**Json Payload Format**:
+
+- [Artifact deleted](./readme/PayloadFormat/DELETE_ARTIFACT.json)
+- [Artifact pulled](./readme/PayloadFormat/PULL_ARTIFACT.json)
+- [Artifact pushed](./readme/PayloadFormat/PULL_ARTIFACT.json)
+- [Chart deleted](./readme/PayloadFormat/DELETE_CHART.json)
+- [Chart downloaded](./readme/PayloadFormat/DOWNLOAD_CHART.json)
+- [Chart uploaded](./readme/PayloadFormat/UPLOAD_CHART.json)
+- [Quota exceed](./readme/PayloadFormat/QUOTA_EXCEED.json)
+- [Quota near threshold](./readme/PayloadFormat/QUOTA_WARNING.json)
+- [Scanning failed](./readme/PayloadFormat/SCANNING_FAILED.json)
+- [Scanning finished](./readme/PayloadFormat/SCANNING_COMPLETED.json)
+- [Scanning stopped](./readme/PayloadFormat/SCANNING_STOPPED.json)
+- [Replication finished](./readme/PayloadFormat/REPLICATION.json)
+- [Tag retention finished](./readme/PayloadFormat/TAG_RETENTION_FINISHED.json)
 
 ### Ref links
 
