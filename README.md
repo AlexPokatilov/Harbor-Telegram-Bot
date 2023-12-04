@@ -96,3 +96,4 @@ Harbor - Telegram bot. Notify about new image pushes to harbor container registr
 
 - [github.com/go-telegram-bot-api/telegram-bot-api/v5](https://pkg.go.dev/github.com/go-telegram-bot-api/telegram-bot-api/v5@v5.5.1)
 - [github.com/technoweenie/multipartstreamer](https://pkg.go.dev/github.com/technoweenie/multipartstreamer@v1.0.1)
+- [Harbor - goharbor.io/docs/2.7.0/working-with-projects/project-configuration/configure-webhooks/](https://goharbor.io/docs/2.7.0/working-with-projects/project-configuration/configure-webhooks/)
