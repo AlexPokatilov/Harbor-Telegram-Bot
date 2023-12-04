@@ -7,7 +7,7 @@
             {
                 "digest": "",
                 "tag": "0.1.0",
-                "resource_url": "https://hub.harbor.com/chartrepo/lib/charts/debian-0.1.0.tgz"
+                "resource_url": "https://hub.harbor.com/chartrepo/test-webhook/charts/debian-0.1.0.tgz"
             }
         ],
         "repository": {
