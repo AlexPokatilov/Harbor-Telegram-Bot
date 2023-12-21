@@ -3,7 +3,8 @@ package main
 import (
     "strconv"
     "os"
-    "strings"
+    //"strings"
+    "net/url"
     "fmt"
     "encoding/json"
     "log"
@@ -61,11 +62,12 @@ func initTelegramBot() {
 }
 
 func getBaseURL(resourceURL string) string {
-    parts := strings.SplitN(resourceURL, "/", 4)
-    if len(parts) >= 3 {
-        return parts[0] + "//" + parts[2] // (http/https) + domain
+    u, err := url.Parse(resourceURL)
+    if err != nil {
+        log.Printf("Error parsing URL: %s", err)
+        return ""
     }
-    return ""
+    return u.Host // отримуємо лише доменне ім'я
 }
 
 func formatMessage(payload WebhookPayload) string {
