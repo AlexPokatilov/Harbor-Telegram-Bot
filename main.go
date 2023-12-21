@@ -60,6 +60,14 @@ func initTelegramBot() {
     log.Printf("OK! Connected to telegram bot account: https://t.me/%s", bot.Self.UserName)
 }
 
+func getBaseURL(resourceURL string) string {
+    parts := strings.SplitN(resourceURL, "/", 4)
+    if len(parts) >= 3 {
+        return parts[0] + "//" + parts[2] // (http/https) + domain
+    }
+    return ""
+}
+
 func formatMessage(payload WebhookPayload) string {
     // Checking if resources are available in the payload
     if len(payload.EventData.Resources) == 0 {
@@ -69,8 +77,8 @@ func formatMessage(payload WebhookPayload) string {
     resource := payload.EventData.Resources[0] // We use the first resource
     repo := payload.EventData.Repository
 
-    harborURL := strings.Split(resource.ResourceURL, "/")[0]
-    harborLink := fmt.Sprintf("https://%s/harbor/projects", harborURL)
+    harborURL := getBaseURL(resource.ResourceURL)
+    harborLink := fmt.Sprintf("%s/harbor/projects", harborURL)
 
     var message string
     switch payload.Type {
