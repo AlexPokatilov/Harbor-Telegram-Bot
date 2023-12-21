@@ -72,11 +72,11 @@ func formatMessage(payload WebhookPayload) string {
     harborURL := strings.Split(resource.ResourceURL, "/")[0]
     harborLink := fmt.Sprintf("https://%s/harbor/projects", harborURL)
 
-    message := fmt.Sprintf("New image pushed by: <b>%s</b>.\n", payload.Operator)
-    message += fmt.Sprintf("- Host: <a href=\"%s\">%s</a>\n", harborLink, harborURL)
-    message += fmt.Sprintf("- Project: <b>%s</b>\n", repo.Namespace)
-    message += fmt.Sprintf("- Repository: <b>%s</b>\n", repo.RepoFullName)
-    message += fmt.Sprintf("- Tag: <b>%s</b>", resource.Tag)
+    message := fmt.Sprintf("New image pushed by: <b>%s</b>\n", payload.Operator)
+    message += fmt.Sprintf("• Host: <a href=\"%s\">%s</a>\n", harborLink, harborURL)
+    message += fmt.Sprintf("• Project: <b>%s</b>\n", repo.Namespace)
+    message += fmt.Sprintf("• Repository: <b>%s</b>\n", repo.RepoFullName)
+    message += fmt.Sprintf("• Tag: <b>%s</b>", resource.Tag)
 
     return message
 }
