@@ -4,9 +4,10 @@
 
 Harbor - Telegram bot. Notify about new image pushes to harbor container registry.
 
-## Release 1.0.1
+## Release 2.0.0
 
-- Support only [PUSH_ARTIFACT](https://goharbor.io/docs/2.7.0/working-with-projects/project-configuration/configure-webhooks/#:~:text=artifact%20to%20registry-,PUSH_ARTIFACT,-Repository%20namespace%20name) event type.
+- Support **`Artifact pushed`** option - [PUSH_ARTIFACT](https://goharbor.io/docs/2.7.0/working-with-projects/project-configuration/configure-webhooks/#:~:text=artifact%20to%20registry-,PUSH_ARTIFACT,-Repository%20namespace%20name) event type.
+- Support **`Chart uploaded`** option - [UPLOAD_CHART](https://goharbor.io/docs/2.7.0/working-with-projects/project-configuration/configure-webhooks/#:~:text=chart%20to%20chartMuseum-,UPLOAD_CHART,-Repository%20name%2C%20chart) event type.
 
 ## Getting started
 
@@ -22,51 +23,31 @@ Harbor - Telegram bot. Notify about new image pushes to harbor container registr
 
 ### Install
 
-- To start Bot, run the following command with your variables in terminal:
+1. To start Bot, run the following command with your variables in terminal:
 
     ``` bash
     docker run -it -p 441:441
         --name harbor-telegram-bot
-        -e DEBUG_MODE=true
         -e CHAT_ID=<you-chat-id>
         -e BOT_TOKEN=<your-bot-api-token>
         alexpokatilov/harbor-telegram-bot:latest
     ```
 
-    If you want to hide your webhook data at logs - user `DEBUG_MODE=false`.
+    Set env `DEBUG_MODE=false`, if you want to hide your data at logs.
 
-- Configure your Harbor `http` webhook:
+2. Configure your Harbor `http` webhook
 
-    ![Alt text](./readme/harbor-webhook.png)
+3. Check your bot. Send [POST](#json-payload-format) request to `http://<your-host>:441/webhook-bot`
 
-- Check your bot. Send POST request to `http://<your-host>:441/webhook-bot`:
+4. Bot message example:
 
-    Body (raw)
-    ```json
-    {
-        "type": "PUSH_ARTIFACT",
-        "occur_at": 1586922308,
-        "operator": "admin",
-        "event_data": {
-            "resources": [{
-                "digest": "sha256:8a9e9863dbb6e10edb5adfe917c00da84e1700fa76e7ed02476aa6e6fb8ee0d8",
-                "tag": "latest",
-                "resource_url": "hub.harbor.com/test-webhook/debian:latest"
-            }],
-            "repository": {
-                "date_created": 1586922308,
-                "name": "debian",
-                "namespace": "test-webhook",
-                "repo_full_name": "test-webhook/debian",
-                "repo_type": "private"
-            }
-        }
-    }
+    ```text
+    New image pushed by: admin
+    • Host: hub.harbor.com
+    • Project: test-webhook
+    • Repository: test-webhook/debian
+    • Tag: latest
     ```
-
-    Bot message:
-
-    ![Alt text](./readme/message-example.png)
 
 ## Links
 
@@ -76,7 +57,7 @@ Harbor - Telegram bot. Notify about new image pushes to harbor container registr
 
 ### Development
 
-**Json Payload Format**:
+#### Json Payload Format:
 
 - [Artifact deleted](./readme/PayloadFormat/DELETE_ARTIFACT.json)
 - [Artifact pulled](./readme/PayloadFormat/PULL_ARTIFACT.json)
