@@ -60,6 +60,21 @@ func initTelegramBot() {
     log.Printf("OK! Connected to telegram bot account: https://t.me/%s", bot.Self.UserName)
 }
 
+func extractDomain(resourceURL string) string {
+    start := strings.Index(resourceURL, "//")   // Знайти індекс, де починаються подвійні слеші "//"
+    if start == -1 {
+        return "" // URL не містить "//"
+    }
+
+    start += 2      // Зсув індексу за межі "//"
+    end := strings.Index(resourceURL[start:], "/")      // Знайти індекс першого слеша "/" після "//"
+    if end == -1 {
+        return resourceURL[start:] // URL не містить додаткового "/"
+    }
+
+    return resourceURL[start : start+end]       // Повернути підрядок між start і end
+}
+
 func formatMessage(payload WebhookPayload) string {
     // Checking if resources are available in the payload
     if len(payload.EventData.Resources) == 0 {
@@ -71,6 +86,7 @@ func formatMessage(payload WebhookPayload) string {
 
     harborURL := strings.Split(resource.ResourceURL, "/")[0]
     harborLink := fmt.Sprintf("https://%s/harbor/projects", harborURL)
+    harborChartURL := extractDomain(resource.ResourceURL)
 
     var message string
     switch payload.Type {
@@ -82,7 +98,7 @@ func formatMessage(payload WebhookPayload) string {
         message += fmt.Sprintf("• Tag: <b>%s</b>", resource.Tag)
     case "UPLOAD_CHART":
         message = fmt.Sprintf("New chart version uploaded by: <b>%s</b>\n", payload.Operator)
-        message += fmt.Sprintf("• Host: <a href=\"%s\">%s</a>\n", harborLink, harborURL)
+        message += fmt.Sprintf("• Host: <a href=\"%s\">%s</a>\n", harborLink, harborChartURL)
         message += fmt.Sprintf("• Project: <b>%s</b>\n", repo.Namespace)
         message += fmt.Sprintf("• Chart: <b>%s</b>\n", repo.Name)
         message += fmt.Sprintf("• Version: <b>%s</b>", resource.Tag)
