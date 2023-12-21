@@ -72,11 +72,23 @@ func formatMessage(payload WebhookPayload) string {
     harborURL := strings.Split(resource.ResourceURL, "/")[0]
     harborLink := fmt.Sprintf("https://%s/harbor/projects", harborURL)
 
-    message := fmt.Sprintf("New image pushed by: <b>%s</b>\n", payload.Operator)
-    message += fmt.Sprintf("• Host: <a href=\"%s\">%s</a>\n", harborLink, harborURL)
-    message += fmt.Sprintf("• Project: <b>%s</b>\n", repo.Namespace)
-    message += fmt.Sprintf("• Repository: <b>%s</b>\n", repo.RepoFullName)
-    message += fmt.Sprintf("• Tag: <b>%s</b>", resource.Tag)
+    var message string
+    switch payload.Type {
+    case "PUSH_ARTIFACT":
+        message = fmt.Sprintf("New image pushed by: <b>%s</b>\n", payload.Operator)
+        message += fmt.Sprintf("• Host: <a href=\"%s\">%s</a>\n", harborLink, harborURL)
+        message += fmt.Sprintf("• Project: <b>%s</b>\n", repo.Namespace)
+        message += fmt.Sprintf("• Repository: <b>%s</b>\n", repo.RepoFullName)
+        message += fmt.Sprintf("• Tag: <b>%s</b>", resource.Tag)
+    case "UPLOAD_CHART":
+        message = fmt.Sprintf("New chart version uploaded by: <b>%s</b>\n", payload.Operator)
+        message += fmt.Sprintf("• Host: <a href=\"%s\">%s</a>\n", harborLink, harborURL)
+        message += fmt.Sprintf("• Project: <b>%s</b>\n", repo.Namespace)
+        message += fmt.Sprintf("• Chart: <b>%s</b>\n", repo.Name)
+        message += fmt.Sprintf("• Version: <b>%s</b>", resource.Tag)
+    default:
+        message = "WARNING!! Received an unknown event type."
+    }
 
     return message
 }
