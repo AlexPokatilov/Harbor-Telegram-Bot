@@ -10,7 +10,7 @@ on:
       - "README/*.jpg"
       - "README/*.md"
       - "LICENSE"
-      - "readme/*"
+      - "readme/**/*"
   pull_request:
     branches: [ "main" ]
     paths-ignore:
@@ -21,7 +21,7 @@ on:
       - "README/*.jpg"
       - "README/*.md"
       - "LICENSE"
-      - "readme/*"
+      - "readme/**/*"
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
