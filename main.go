@@ -67,7 +67,8 @@ func getBaseURL(resourceURL string) string {
         log.Printf("Error parsing URL: %s", err)
         return ""
     }
-    return u.Host // повертаємо тільки хост
+    // Повернення лише доменного імені без схеми та шляху
+    return u.Hostname()
 }
 
 func formatMessage(payload WebhookPayload) string {
