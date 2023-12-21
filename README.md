@@ -4,7 +4,7 @@
 
 Harbor - Telegram bot. Notify about new image pushes to harbor container registry.
 
-## Release 1.0
+## Release 1.0.1
 
 - Support only [PUSH_ARTIFACT](https://goharbor.io/docs/2.7.0/working-with-projects/project-configuration/configure-webhooks/#:~:text=artifact%20to%20registry-,PUSH_ARTIFACT,-Repository%20namespace%20name) event type.
 
