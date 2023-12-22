@@ -92,13 +92,13 @@ func formatMessage(payload WebhookPayload) string {
     var message string
     switch payload.Type {
     case "PUSH_ARTIFACT":
-        message = fmt.Sprintf("New 🐳 image pushed by: <b>%s</b>\n", payload.Operator)
+        message = fmt.Sprintf("\nNew 🐳 image pushed by: <b>%s</b>\n", payload.Operator)
         message += fmt.Sprintf("• Host: <a href=\"%s\">%s</a>\n", harborLink, harborURL)
         message += fmt.Sprintf("• Project: <b>%s</b>\n", repo.Namespace)
         message += fmt.Sprintf("• Repository: <b>%s</b>\n", repo.RepoFullName)
         message += fmt.Sprintf("• Tag: <b>%s</b>", resource.Tag)
     case "UPLOAD_CHART":
-        message = fmt.Sprintf("New ☸️ chart version uploaded by: <b>%s</b>\n", payload.Operator)
+        message = fmt.Sprintf("\nNew ☸️ chart version uploaded by: <b>%s</b>\n", payload.Operator)
         message += fmt.Sprintf("• Host: <a href=\"%s\">%s</a>\n", harborChartLink, harborChartURL)
         message += fmt.Sprintf("• Project: <b>%s</b>\n", repo.Namespace)
         message += fmt.Sprintf("• Chart: <b>%s</b>\n", repo.Name)
@@ -110,13 +110,29 @@ func formatMessage(payload WebhookPayload) string {
     return message
 }
 
+func toJSONPretty(v interface{}) string {
+    prettyJSON, err := json.MarshalIndent(v, "", "  ")
+    if err != nil {
+        log.Printf("Error when marshalling to pretty JSON: %v", err)
+        return ""
+    }
+    return string(prettyJSON)
+}
+
 func sendTelegramMessage(chatID int64, message string) {
     msg := tgbotapi.NewMessage(chatID, message)
     msg.ParseMode = "HTML"
-    if _, err := bot.Send(msg); err != nil {
-        log.Println("ERROR!!! When sending message:", err)
+    response, err := bot.Send(msg) // Sending a message
+    if err != nil {
+        log.Printf("Error when sending message: %v", err)
+    } else {
+        log.Printf("Endpoint: sendMessage, params: map[chat_id:%d parse_mode:HTML text:\n%s]\n",chatID, message)
+        // Using toJSONPretty to format the response in pretty JSON
+        prettyJSON := toJSONPretty(response)
+        log.Printf("Endpoint: sendMessage, response:\n%s\n", prettyJSON)
     }
 }
+
 
 func handleWebhook(w http.ResponseWriter, r *http.Request) {
     // Check for a POST request
