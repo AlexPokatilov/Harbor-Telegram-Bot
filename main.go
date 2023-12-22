@@ -114,12 +114,13 @@ func sendTelegramMessage(chatID int64, message string) {
     msg := tgbotapi.NewMessage(chatID, message)
     msg.ParseMode = "HTML"
     if _, err := bot.Send(msg); err != nil {
-        log.Printf("Error when sending message: %v", err)
+        log.Println("ERROR!!! When sending message:", err)
     } else {
-        log.Printf("Endpoint: sendMessage, params: map[chat_id:%d parse_mode:HTML text:\n%s]\n", chatID, message)
+        // Логування успішного відправлення повідомлення
+        log.Printf("Endpoint: sendMessage, params: map[chat_id:%d parse_mode:HTML text:\n%s]\n",
+            chatID, message)
     }
 }
-
 
 func handleWebhook(w http.ResponseWriter, r *http.Request) {
     // Check for a POST request
