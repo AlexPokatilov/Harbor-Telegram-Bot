@@ -61,18 +61,18 @@ func initTelegramBot() {
 }
 
 func extractDomain(resourceURL string) string {
-    start := strings.Index(resourceURL, "//")   // Знайти індекс, де починаються подвійні слеші "//"
+    start := strings.Index(resourceURL, "//")   // Find the index where the double slashes begin "//"
     if start == -1 {
-        return "" // URL не містить "//"
+        return "" // URL does not contain "//"
     }
 
-    start += 2      // Зсув індексу за межі "//"
-    end := strings.Index(resourceURL[start:], "/")      // Знайти індекс першого слеша "/" після "//"
+    start += 2      // Index shift beyond limits "//"
+    end := strings.Index(resourceURL[start:], "/")      // Find the index of the first slash "/" after "//"
     if end == -1 {
-        return resourceURL[start:] // URL не містить додаткового "/"
+        return resourceURL[start:] // URL does not contain an extra "/"
     }
 
-    return resourceURL[start : start+end]       // Повернути підрядок між start і end
+    return resourceURL[start : start+end]       // Return the substring between start and end
 }
 
 func formatMessage(payload WebhookPayload) string {
