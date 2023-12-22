@@ -115,6 +115,10 @@ func sendTelegramMessage(chatID int64, message string) {
     msg.ParseMode = "HTML"
     if _, err := bot.Send(msg); err != nil {
         log.Println("ERROR!!! When sending message:", err)
+    } else {
+        // Логування успішного відправлення повідомлення
+        log.Printf("Endpoint: sendMessage, params: map[chat_id:%d parse_mode:HTML text:\n%s]\n",
+            chatID, message)
     }
 }
 
