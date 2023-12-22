@@ -41,5 +41,5 @@ jobs:
           push: true
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/harbor-telegram-bot:build-${{ github.run_number }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/harbor-telegram-bot:2.1.0
-#            ${{ secrets.DOCKERHUB_USERNAME }}/harbor-telegram-bot:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/harbor-telegram-bot:2.0.0
+            ${{ secrets.DOCKERHUB_USERNAME }}/harbor-telegram-bot:latest
