@@ -110,13 +110,28 @@ func formatMessage(payload WebhookPayload) string {
     return message
 }
 
+func toJSONPretty(v interface{}) string {
+    prettyJSON, err := json.MarshalIndent(v, "", "  ")
+    if err != nil {
+        log.Printf("Error when marshalling to pretty JSON: %v", err)
+        return ""
+    }
+    return string(prettyJSON)
+}
+
 func sendTelegramMessage(chatID int64, message string) {
     msg := tgbotapi.NewMessage(chatID, message)
     msg.ParseMode = "HTML"
-    if _, err := bot.Send(msg); err != nil {
-        log.Println("ERROR!!! When sending message:", err)
+    response, err := bot.Send(msg) // Відправлення повідомлення
+    if err != nil {
+        log.Printf("Error when sending message: %v", err)
+    } else {
+        // Використання toJSONPretty для форматування відповіді в pretty JSON
+        prettyJSON := toJSONPretty(response)
+        log.Printf("Endpoint: sendMessage, response:\n%s\n", prettyJSON)
     }
 }
+
 
 func handleWebhook(w http.ResponseWriter, r *http.Request) {
     // Check for a POST request
