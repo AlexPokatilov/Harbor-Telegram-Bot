@@ -122,12 +122,12 @@ func toJSONPretty(v interface{}) string {
 func sendTelegramMessage(chatID int64, message string) {
     msg := tgbotapi.NewMessage(chatID, message)
     msg.ParseMode = "HTML"
-    response, err := bot.Send(msg) // Відправлення повідомлення
+    response, err := bot.Send(msg) // Sending a message
     if err != nil {
         log.Printf("Error when sending message: %v", err)
     } else {
         log.Printf("Endpoint: sendMessage, params: map[chat_id:%d parse_mode:HTML text:\n%s]\n",chatID, message)
-        // Використання toJSONPretty для форматування відповіді в pretty JSON
+        // Using toJSONPretty to format the response in pretty JSON
         prettyJSON := toJSONPretty(response)
         log.Printf("Endpoint: sendMessage, response:\n%s\n", prettyJSON)
     }

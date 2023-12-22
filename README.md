@@ -2,9 +2,9 @@
 
 [![Build](https://github.com/AlexPokatilov/Harbor-Telegram-Bot/actions/workflows/docker.yml/badge.svg)](https://github.com/AlexPokatilov/Harbor-Telegram-Bot/actions/workflows/docker.yml)
 
-Harbor - Telegram bot. Notify about new image pushes to harbor container registry.
+Harbor - Telegram bot. Notify about new events from your harbor.
 
-## Release 2.0.0
+## Release 2.1.0
 
 - Support **`Artifact pushed`** option - [PUSH_ARTIFACT](https://goharbor.io/docs/2.7.0/working-with-projects/project-configuration/configure-webhooks/#:~:text=artifact%20to%20registry-,PUSH_ARTIFACT,-Repository%20namespace%20name) event type.
 - Support **`Chart uploaded`** option - [UPLOAD_CHART](https://goharbor.io/docs/2.7.0/working-with-projects/project-configuration/configure-webhooks/#:~:text=chart%20to%20chartMuseum-,UPLOAD_CHART,-Repository%20name%2C%20chart) event type.
@@ -33,7 +33,7 @@ Harbor - Telegram bot. Notify about new image pushes to harbor container registr
         alexpokatilov/harbor-telegram-bot:latest
     ```
 
-    Set env `DEBUG_MODE=false`, if you want to hide your data at logs.
+    Set env `DEBUG_MODE=true`, if you want to see all logs with raw format.
 
 2. Configure your Harbor `http` webhook
 
@@ -42,7 +42,7 @@ Harbor - Telegram bot. Notify about new image pushes to harbor container registr
 4. Bot message example:
 
     ```text
-    New image pushed by: admin
+    New 🐳 image pushed by: admin
     • Host: hub.harbor.com
     • Project: test-webhook
     • Repository: test-webhook/debian
@@ -57,7 +57,7 @@ Harbor - Telegram bot. Notify about new image pushes to harbor container registr
 
 ### Development
 
-#### Json Payload Format:
+#### Json Payload Format
 
 - [Artifact deleted](./readme/PayloadFormat/DELETE_ARTIFACT.json)
 - [Artifact pulled](./readme/PayloadFormat/PULL_ARTIFACT.json)
