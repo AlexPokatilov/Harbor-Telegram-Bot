@@ -126,6 +126,7 @@ func sendTelegramMessage(chatID int64, message string) {
     if err != nil {
         log.Printf("Error when sending message: %v", err)
     } else {
+        log.Printf("Endpoint: sendMessage, params: map[chat_id:%d parse_mode:HTML text:\n%s]\n",chatID, message)
         // Використання toJSONPretty для форматування відповіді в pretty JSON
         prettyJSON := toJSONPretty(response)
         log.Printf("Endpoint: sendMessage, response:\n%s\n", prettyJSON)
