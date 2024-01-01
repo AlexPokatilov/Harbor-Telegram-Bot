@@ -1,4 +1,4 @@
-# Harbor-Bot
+# Harbor-Telegram-Bot
 
 [![Build](https://github.com/AlexPokatilov/Harbor-Telegram-Bot/actions/workflows/docker.yml/badge.svg)](https://github.com/AlexPokatilov/Harbor-Telegram-Bot/actions/workflows/docker.yml)
 
