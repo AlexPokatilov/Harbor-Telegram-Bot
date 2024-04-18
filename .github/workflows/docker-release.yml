@@ -25,5 +25,5 @@ jobs:
         with:
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/harbor-telegram-bot::${{ steps.release_tag.outputs.tag }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/harbor-telegram-bot:${{ steps.release_tag.outputs.tag }}
             ${{ secrets.DOCKERHUB_USERNAME }}/harbor-telegram-bot:latest
