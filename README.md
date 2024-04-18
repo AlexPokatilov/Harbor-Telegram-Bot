@@ -1,6 +1,7 @@
 # Harbor-Telegram-Bot
 
 [![Build](https://github.com/AlexPokatilov/Harbor-Telegram-Bot/actions/workflows/docker.yml/badge.svg)](https://github.com/AlexPokatilov/Harbor-Telegram-Bot/actions/workflows/docker.yml)
+[![Lint](https://github.com/AlexPokatilov/Harbor-Telegram-Bot/actions/workflows/golangci-lint.yml/badge.svg)](https://github.com/AlexPokatilov/Harbor-Telegram-Bot/actions/workflows/golangci-lint.yml)
 [![Release](https://github.com/AlexPokatilov/Harbor-Telegram-Bot/actions/workflows/docker-release.yml/badge.svg)](https://github.com/AlexPokatilov/Harbor-Telegram-Bot/actions/workflows/docker-release.yml)
 
 Harbor event notifications for Telegram.
