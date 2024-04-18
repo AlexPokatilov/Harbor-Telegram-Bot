@@ -1,18 +1,8 @@
-name: Docker Build
+name: Build
 on:
-  push:
-    branches: [ "main" ]
-    paths-ignore:
-      - "README.md"
-      - "README/*.png"
-      - "README/*.svg"
-      - "README/*.jpeg"
-      - "README/*.jpg"
-      - "README/*.md"
-      - "LICENSE"
-      - "readme/**/*"
   pull_request:
-    branches: [ "main" ]
+    branches:
+      - "main"
     paths-ignore:
       - "README.md"
       - "README/*.png"
@@ -22,6 +12,9 @@ on:
       - "README/*.md"
       - "LICENSE"
       - "readme/**/*"
+env:
+  USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+  PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
@@ -33,13 +26,13 @@ jobs:
       - name: Login to Docker Hub
         uses: docker/login-action@v3.1.0
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          registry: docker.io
+          username: ${{ env.USERNAME }}
+          password: ${{ env.PASSWORD }}
+          logout: true
       - name: Push
         uses: docker/build-push-action@v5.1.0
         with:
           push: true
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/harbor-telegram-bot:build-${{ github.run_number }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/harbor-telegram-bot:2.1.0
-            ${{ secrets.DOCKERHUB_USERNAME }}/harbor-telegram-bot:latest
