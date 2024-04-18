@@ -2,6 +2,7 @@
 
 [![Build](https://github.com/AlexPokatilov/Harbor-Telegram-Bot/actions/workflows/docker.yml/badge.svg)](https://github.com/AlexPokatilov/Harbor-Telegram-Bot/actions/workflows/docker.yml)
 [![Lint](https://github.com/AlexPokatilov/Harbor-Telegram-Bot/actions/workflows/golangci-lint.yml/badge.svg)](https://github.com/AlexPokatilov/Harbor-Telegram-Bot/actions/workflows/golangci-lint.yml)
+[![CodeQL](https://github.com/AlexPokatilov/Harbor-Telegram-Bot/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/AlexPokatilov/Harbor-Telegram-Bot/actions/workflows/github-code-scanning/codeql)
 [![Released](https://github.com/AlexPokatilov/Harbor-Telegram-Bot/actions/workflows/release.yml/badge.svg)](https://github.com/AlexPokatilov/Harbor-Telegram-Bot/actions/workflows/release.yml)
 
 Harbor event notifications for Telegram.
