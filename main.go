@@ -196,7 +196,6 @@ func handleWebhook(w http.ResponseWriter, r *http.Request) {
     }
 }
 
-
 func main() {
 	initTelegramBot() // Initialize the Telegram bot
 	http.HandleFunc("/webhook-bot", handleWebhook)
