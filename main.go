@@ -56,10 +56,10 @@ func initTelegramBot() {
 		log.Panic(err)
 	}
 
-	debugModeStr := os.Getenv("DEBUG_MODE") //true - hide data, false - show data
+	debugModeStr := os.Getenv("DEBUG") //true - hide data, false - show data
 	debugModeBool, err := strconv.ParseBool(debugModeStr)
 	if err != nil {
-		log.Printf("ERROR!!! When converting DEBUG_MODE to bool: %v", err)
+		log.Printf("ERROR!!! When converting DEBUG to bool: %v", err)
 		return
 	}
 
@@ -99,13 +99,13 @@ func formatMessage(payload WebhookPayload) string {
 	var message string
 	switch payload.Type {
 	case "PUSH_ARTIFACT":
-		message = fmt.Sprintf("\nNew 🐳 image pushed by: <b>%s</b>\n", payload.Operator)
+		message = fmt.Sprintf("\n🐳 New image pushed by: <b>%s</b>\n", payload.Operator)
 		message += fmt.Sprintf("• Host: <a href=\"%s\">%s</a>\n", harborLink, harborURL)
 		message += fmt.Sprintf("• Project: <b>%s</b>\n", repo.Namespace)
 		message += fmt.Sprintf("• Repository: <b>%s</b>\n", repo.RepoFullName)
 		message += fmt.Sprintf("• Tag: <b>%s</b>", resource.Tag)
 	case "UPLOAD_CHART":
-		message = fmt.Sprintf("\nNew ☸️ chart version uploaded by: <b>%s</b>\n", payload.Operator)
+		message = fmt.Sprintf("\n☸️ New chart version uploaded by: <b>%s</b>\n", payload.Operator)
 		message += fmt.Sprintf("• Host: <a href=\"%s\">%s</a>\n", harborChartLink, harborChartURL)
 		message += fmt.Sprintf("• Project: <b>%s</b>\n", repo.Namespace)
 		message += fmt.Sprintf("• Chart: <b>%s</b>\n", repo.Name)
@@ -169,7 +169,7 @@ func handleWebhook(w http.ResponseWriter, r *http.Request) {
 	}
 
 	topicIDStr := os.Getenv("TOPIC_ID")
-	var topicIDPtr *int64 // 使用指针类型以支持可选性
+	var topicIDPtr *int64 // Use pointer types to support optionality
 
 	if topicIDStr != "" {
 		topicID, err := strconv.ParseInt(topicIDStr, 10, 64)
