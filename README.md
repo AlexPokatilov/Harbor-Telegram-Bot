@@ -1,10 +1,11 @@
 # Harbor-Telegram-Bot
 
 [![Build](https://github.com/AlexPokatilov/Harbor-Telegram-Bot/actions/workflows/docker.yml/badge.svg)](https://github.com/AlexPokatilov/Harbor-Telegram-Bot/actions/workflows/docker.yml)
+[![Release](https://github.com/AlexPokatilov/Harbor-Telegram-Bot/actions/workflows/docker-release.yml/badge.svg)](https://github.com/AlexPokatilov/Harbor-Telegram-Bot/actions/workflows/docker-release.yml)
 
-Harbor - Telegram bot. Notify about new events from your harbor.
+Harbor event notifications for Telegram.
 
-## Release 2.1.0
+## Release 2.2.0
 
 - Support **`Artifact pushed`** option - [PUSH_ARTIFACT](https://goharbor.io/docs/2.7.0/working-with-projects/project-configuration/configure-webhooks/#:~:text=artifact%20to%20registry-,PUSH_ARTIFACT,-Repository%20namespace%20name) event type.
 - Support **`Chart uploaded`** option - [UPLOAD_CHART](https://goharbor.io/docs/2.7.0/working-with-projects/project-configuration/configure-webhooks/#:~:text=chart%20to%20chartMuseum-,UPLOAD_CHART,-Repository%20name%2C%20chart) event type.
@@ -13,13 +14,26 @@ Harbor - Telegram bot. Notify about new events from your harbor.
 
 ### Pre-requirements
 
-- Harbor 2.7.x
-- Create Telegram Bot with [BotFather](https://core.telegram.org/bots/features#botfather).
-- Get Bot API Token.
+- Harbor 2.0.0 - 2.7.x
+- Harbor ChartMuseum Extension
+- Create Telegram Bot with [BotFather](https://core.telegram.org/bots/features#botfather)
+- Get Bot API Token
 - Get your ChatID (example):
     - public: `https:/t.me/MY_CHAT`
     - [private](https://telegram-bot-sdk.readme.io/reference/getupdates): `-2233445566778`
 - Add your bot to chanel or group with admin rules (messages access).
+
+#### Optional
+
+- TopidID ([message_thread_id](https://core.telegram.org/bots/api#message)):
+
+    - Default or General Topic: `0`
+
+    - To test with topics:
+
+        ```bash:
+        curl -X GET 'https://api.telegram.org/bot<bot-api-token>/sendMessage?chat_id=<chat-id>&message_thread_id=<chat-topic-id>&text=HelloTopic!'
+        ```
 
 ### Install
 
@@ -28,31 +42,42 @@ Harbor - Telegram bot. Notify about new events from your harbor.
     ``` bash
     docker run -it -p 441:441
         --name harbor-telegram-bot
-        -e CHAT_ID=<you-chat-id>
-        -e BOT_TOKEN=<your-bot-api-token>
+        -e CHAT_ID=<chat-id>
+        -e BOT_TOKEN=<bot-api-token>
+        -e TOPIC_ID=<topic-id>
         alexpokatilov/harbor-telegram-bot:latest
     ```
 
-    Set env `DEBUG_MODE=true`, if you want to see all logs with raw format.
+    Set `-e DEBUG=true`, if you want to see all logs with raw format.
 
 2. Configure your Harbor `http` webhook
 
-3. Check your bot. Send [POST](#json-payload-format) request to `http://<your-host>:441/webhook-bot`
-
+3. Check your bot. Send [POST](#json-payload-format) request to `http://<hostname>:441/webhook-bot`
 4. Bot message example:
 
-    ```text
-    New 🐳 image pushed by: admin
-    • Host: hub.harbor.com
-    • Project: test-webhook
-    • Repository: test-webhook/debian
-    • Tag: latest
-    ```
+    - Docker Image (ARTIFACT)
+
+        ```text
+        🐳 New image pushed by: admin
+        • Host: hub.harbor.com
+        • Project: test-webhook
+        • Repository: test-webhook/debian
+        • Tag: latest
+        ```
+
+    - Helm Chart (CHART)
+
+        ```text
+        ☸️ New chart version uploaded by: admin
+        • Host: hub.harbor.com
+        • Project: test-webhook
+        • Chart: test-webhook/debian
+        • Version: latest
+        ```
 
 ## Links
 
-### Releases
-
+- [Releases](https://github.com/AlexPokatilov/Harbor-Telegram-Bot/releases)
 - [Docker Hub](https://hub.docker.com/r/alexpokatilov/harbor-telegram-bot)
 
 ### Development
