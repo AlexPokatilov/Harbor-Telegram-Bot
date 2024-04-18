@@ -16,7 +16,7 @@ COPY --from=builder /app/harbor-telegram-bot .
 
 ENV CHAT_ID=
 ENV BOT_TOKEN=
-ENV DEBUG_MODE=false
+ENV DEBUG=false
 
 EXPOSE 441:441
 CMD ["./harbor-telegram-bot"]
