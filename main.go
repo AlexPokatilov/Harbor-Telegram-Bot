@@ -99,17 +99,49 @@ func formatMessage(payload WebhookPayload) string {
 	var message string
 	switch payload.Type {
 	case "PUSH_ARTIFACT":
-		message = fmt.Sprintf("\n🐳 New image pushed by: <b>%s</b>\n", payload.Operator)
+		message = fmt.Sprintf("🐳 New artifact pushed by: <b>%s</b>\n", payload.Operator)
+		message += fmt.Sprintf("• Host: <a href=\"%s\">%s</a>\n", harborLink, harborURL)
+		message += fmt.Sprintf("• Project: <b>%s</b>\n", repo.Namespace)
+		message += fmt.Sprintf("• Repository: <b>%s</b>\n", repo.RepoFullName)
+		message += fmt.Sprintf("• Tag: <b>%s</b>", resource.Tag)
+	case "PULL_ARTIFACT":
+		message = fmt.Sprintf("🐳 Artifact pulled by: <b>%s</b>\n", payload.Operator)
+		message += fmt.Sprintf("• Host: <a href=\"%s\">%s</a>\n", harborLink, harborURL)
+		message += fmt.Sprintf("• Project: <b>%s</b>\n", repo.Namespace)
+		message += fmt.Sprintf("• Access: <b>%s</b>\n", repo.RepoType)
+		message += fmt.Sprintf("• Repository: <b>%s</b>\n", repo.RepoFullName)
+		message += fmt.Sprintf("• Tag: <b>%s</b>", resource.Tag)
+	case "DELETE_ARTIFACT":
+		message = fmt.Sprintf("❗️ Attention!\n🐳 Artifact removed by: <b>%s</b>\n", payload.Operator)
 		message += fmt.Sprintf("• Host: <a href=\"%s\">%s</a>\n", harborLink, harborURL)
 		message += fmt.Sprintf("• Project: <b>%s</b>\n", repo.Namespace)
 		message += fmt.Sprintf("• Repository: <b>%s</b>\n", repo.RepoFullName)
 		message += fmt.Sprintf("• Tag: <b>%s</b>", resource.Tag)
 	case "UPLOAD_CHART":
-		message = fmt.Sprintf("\n☸️ New chart version uploaded by: <b>%s</b>\n", payload.Operator)
+		message = fmt.Sprintf("☸️ New chart pushed by: <b>%s</b>\n", payload.Operator)
 		message += fmt.Sprintf("• Host: <a href=\"%s\">%s</a>\n", harborChartLink, harborChartURL)
 		message += fmt.Sprintf("• Project: <b>%s</b>\n", repo.Namespace)
 		message += fmt.Sprintf("• Chart: <b>%s</b>\n", repo.Name)
 		message += fmt.Sprintf("• Version: <b>%s</b>", resource.Tag)
+	case "DOWNLOAD_CHART":
+		message = fmt.Sprintf("☸️ Chart pulled by: <b>%s</b>\n", payload.Operator)
+		message += fmt.Sprintf("• Host: <a href=\"%s\">%s</a>\n", harborChartLink, harborChartURL)
+		message += fmt.Sprintf("• Project: <b>%s</b>\n", repo.Namespace)
+		message += fmt.Sprintf("• Access: <b>%s</b>\n", repo.RepoType)
+		message += fmt.Sprintf("• Chart: <b>%s</b>\n", repo.Name)
+		message += fmt.Sprintf("• Version: <b>%s</b>", resource.Tag)
+	case "DELETE_CHART":
+		message = fmt.Sprintf("❗️ Attention!\n☸️ Chart removed by: <b>%s</b>\n", payload.Operator)
+		message += fmt.Sprintf("• Host: <a href=\"%s\">%s</a>\n", harborChartLink, harborChartURL)
+		message += fmt.Sprintf("• Project: <b>%s</b>\n", repo.Namespace)
+		message += fmt.Sprintf("• Chart: <b>%s</b>\n", repo.Name)
+		message += fmt.Sprintf("• Version: <b>%s</b>", resource.Tag)
+	case "QUOTA_EXCEED":
+		message = "🚨 Alert!!! Project quota has been exceed!!!\n"
+		message += fmt.Sprintf("• Project: <b>%s</b>\n", repo.Namespace)
+	case "QUOTA_WARNING":
+		message = "⚠️ Warning!! Quota usage reach 85%!!\n"
+		message += fmt.Sprintf("• Project: <b>%s</b>\n", repo.Namespace)
 	default:
 		message = "WARNING!! Received an unknown event type."
 	}
@@ -146,56 +178,55 @@ func sendTelegramMessage(params SendMessageParams) {
 }
 
 func handleWebhook(w http.ResponseWriter, r *http.Request) {
-    // Check for a POST request
-    if r.Method != "POST" {
-        http.Error(w, "ERROR!!! Only POST method is allowed.", http.StatusMethodNotAllowed)
-        return
-    }
+	// Check for a POST request
+	if r.Method != "POST" {
+		http.Error(w, "ERROR!!! Only POST method is allowed.", http.StatusMethodNotAllowed)
+		return
+	}
 
-    // Decode the JSON from the request body
-    var payload WebhookPayload
-    decoder := json.NewDecoder(r.Body)
-    if err := decoder.Decode(&payload); err != nil {
-        http.Error(w, err.Error(), http.StatusBadRequest)
-        return
-    }
-    defer r.Body.Close()
+	// Decode the JSON from the request body
+	var payload WebhookPayload
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&payload); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
 
-    chatIdStr := os.Getenv("CHAT_ID")
-    chatIdInt, err := strconv.ParseInt(chatIdStr, 10, 64)
-    if err != nil {
-        log.Printf("ERROR!!! When converting chat ID to int64: %v", err)
-        return
-    }
+	chatIdStr := os.Getenv("CHAT_ID")
+	chatIdInt, err := strconv.ParseInt(chatIdStr, 10, 64)
+	if err != nil {
+		log.Printf("ERROR!!! When converting chat ID to int64: %v", err)
+		return
+	}
 
-    topicIDStr := os.Getenv("TOPIC_ID")
-    var topicIDPtr *int64 // Use pointer types to support optionality
+	topicIDStr := os.Getenv("TOPIC_ID")
+	var topicIDPtr *int64 // Use pointer types to support optionality
 
-    if topicIDStr != "" {
-        topicID, err := strconv.ParseInt(topicIDStr, 10, 64)
-        if err != nil {
-            log.Printf("ERROR!!! When converting topic ID to int64: %v\", err", err)
-            return
-        }
-        topicIDPtr = &topicID
-    }
+	if topicIDStr != "" {
+		topicID, err := strconv.ParseInt(topicIDStr, 10, 64)
+		if err != nil {
+			log.Printf("ERROR!!! When converting topic ID to int64: %v\", err", err)
+			return
+		}
+		topicIDPtr = &topicID
+	}
 
-    // Forming and sending a message in Telegram
-    message := formatMessage(payload) // Using formatMessage to create a message
-    sendTelegramMessage(SendMessageParams{
-        ChatID:  chatIdInt,
-        Message: message,
-        TopicID: topicIDPtr,
-    })
+	// Forming and sending a message in Telegram
+	message := formatMessage(payload) // Using formatMessage to create a message
+	sendTelegramMessage(SendMessageParams{
+		ChatID:  chatIdInt,
+		Message: message,
+		TopicID: topicIDPtr,
+	})
 
-    // Response to request
-    w.WriteHeader(http.StatusOK)
-    if _, err := w.Write([]byte("OK! Webhook received.")); err != nil {
-        log.Printf("ERROR!!! Failed to write response: %v", err)
-        return
-    }
+	// Response to request
+	w.WriteHeader(http.StatusOK)
+	if _, err := w.Write([]byte("OK! Webhook received.")); err != nil {
+		log.Printf("ERROR!!! Failed to write response: %v", err)
+		return
+	}
 }
-
 
 func main() {
 	initTelegramBot() // Initialize the Telegram bot

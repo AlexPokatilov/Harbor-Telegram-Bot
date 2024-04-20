@@ -7,31 +7,37 @@
 
 Harbor event notifications for Telegram.
 
-## Release 2.2.0
+## Release 2.3.0
 
 - Support **`Artifact pushed`** option - [PUSH_ARTIFACT](https://goharbor.io/docs/2.7.0/working-with-projects/project-configuration/configure-webhooks/#:~:text=artifact%20to%20registry-,PUSH_ARTIFACT,-Repository%20namespace%20name) event type.
+- Support **`Artifact pushed`** option - [PULL_ARTIFACT](https://goharbor.io/docs/2.7.0/working-with-projects/project-configuration/configure-webhooks/#:~:text=artifact%20from%20registry-,PULL_ARTIFACT,-Repository%20namespace%20name) event type.
+- Support **`Artifact pushed`** option - [DELETE_ARTIFACT](https://goharbor.io/docs/2.7.0/working-with-projects/project-configuration/configure-webhooks/#:~:text=artifact%20from%20registry-,DELETE_ARTIFACT,-Repository%20namespace%20name) event type.
 - Support **`Chart uploaded`** option - [UPLOAD_CHART](https://goharbor.io/docs/2.7.0/working-with-projects/project-configuration/configure-webhooks/#:~:text=chart%20to%20chartMuseum-,UPLOAD_CHART,-Repository%20name%2C%20chart) event type.
+- Support **`Chart uploaded`** option - [DOWNLOAD_CHART](https://goharbor.io/docs/2.7.0/working-with-projects/project-configuration/configure-webhooks/#:~:text=chart%20from%20chartMuseum-,DOWNLOAD_CHART,-Repository%20name%2C%20chart) event type.
+- Support **`Artifact pushed`** option - [DELETE_CHART](https://goharbor.io/docs/2.7.0/working-with-projects/project-configuration/configure-webhooks/#:~:text=chart%20from%20chartMuseum-,DELETE_CHART,-Repository%20name%2C%20chart) event type.
+- Support **`Artifact pushed`** option - [QUOTA_EXCEED](https://goharbor.io/docs/2.7.0/working-with-projects/project-configuration/configure-webhooks/#:~:text=Project%20quota%20exceeded-,QUOTA_EXCEED,-Repository%20namespace%20name) event type.
+- Support **`Chart uploaded`** option - [QUOTA_WARNING](https://goharbor.io/docs/2.7.0/working-with-projects/project-configuration/configure-webhooks/#:~:text=quota%20near%20threshold-,QUOTA_WARNING,-Repository%20namespace%20name) event type.
 
 ## Getting started
 
 ### Pre-requirements
 
-- Harbor 2.0.0 - 2.7.x
+- Harbor v2.0 - v2.7
 - Harbor ChartMuseum Extension
 - Create Telegram Bot with [BotFather](https://core.telegram.org/bots/features#botfather)
 - Get Bot API Token
 - Get your ChatID (example):
-    - public: `https:/t.me/MY_CHAT`
-    - [private](https://telegram-bot-sdk.readme.io/reference/getupdates): `-2233445566778`
+  - public: `https:/t.me/MY_CHAT`
+  - [private](https://telegram-bot-sdk.readme.io/reference/getupdates): `-2233445566778`
 - Add your bot to chanel or group with admin rules (messages access).
 
 #### Optional
 
 - TopidID ([message_thread_id](https://core.telegram.org/bots/api#message)):
 
-    - Default or General Topic: `0`
+  - Default or General Topic: `0`
 
-    - To test with topics:
+  - To test with topics:
 
         ```bash:
         curl -X GET 'https://api.telegram.org/bot<bot-api-token>/sendMessage?chat_id=<chat-id>&message_thread_id=<chat-topic-id>&text=HelloTopic!'
@@ -47,7 +53,7 @@ Harbor event notifications for Telegram.
         -e CHAT_ID=<chat-id>
         -e BOT_TOKEN=<bot-api-token>
         -e TOPIC_ID=<topic-id>
-        alexpokatilov/harbor-telegram-bot:latest
+        alexpokatilov/harbor-telegram-bot:2.3.0
     ```
 
     Set `-e DEBUG=true`, if you want to see all logs with raw format.
@@ -67,6 +73,24 @@ Harbor event notifications for Telegram.
         • Tag: latest
         ```
 
+        ```text
+        🐳 Artifact pulled by: admin
+        • Host: hub.harbor.com
+        • Project: test-webhook
+        • Access: public
+        • Repository: test-webhook/debian
+        • Tag: latest
+        ```
+
+        ```text
+        ❗️ Attention!
+        🐳 Artifact removed by: admin
+        • Host: hub.harbor.com
+        • Project: test-webhook
+        • Repository: test-webhook/debian
+        • Tag: latest
+        ```
+
     - Helm Chart (CHART)
 
         ```text
@@ -75,6 +99,36 @@ Harbor event notifications for Telegram.
         • Project: test-webhook
         • Chart: test-webhook/debian
         • Version: latest
+        ```
+
+        ```text
+        ☸️ Chart pulled by: admin
+        • Host: hub.harbor.com
+        • Project: test-webhook
+        • Access: public
+        • Chart: debian
+        • Version: 0.1.0
+        ```
+
+        ```text
+        ❗️ Attention!
+        ☸️ Chart removed by: admin
+        • Host: hub.harbor.com
+        • Project: test-webhook
+        • Chart: test-webhook/debian
+        • Version: latest
+        ```
+
+    - Alert (QUOTA)
+
+        ```text
+        🚨 Alert!!! Project quota has been exceed!!!
+        • Project: test-webhook
+        ```
+
+        ```text
+        ⚠️ Warning!! Quota usage reach 85%!!
+        • Project: test-webhook
         ```
 
 ## Links
