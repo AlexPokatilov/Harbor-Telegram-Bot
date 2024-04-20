@@ -10,13 +10,13 @@ Harbor event notifications for Telegram.
 ## Release 2.3.0
 
 - Support **`Artifact pushed`** option - [PUSH_ARTIFACT](https://goharbor.io/docs/2.7.0/working-with-projects/project-configuration/configure-webhooks/#:~:text=artifact%20to%20registry-,PUSH_ARTIFACT,-Repository%20namespace%20name) event type.
-- Support **`Artifact pushed`** option - [PULL_ARTIFACT](https://goharbor.io/docs/2.7.0/working-with-projects/project-configuration/configure-webhooks/#:~:text=artifact%20from%20registry-,PULL_ARTIFACT,-Repository%20namespace%20name) event type.
-- Support **`Artifact pushed`** option - [DELETE_ARTIFACT](https://goharbor.io/docs/2.7.0/working-with-projects/project-configuration/configure-webhooks/#:~:text=artifact%20from%20registry-,DELETE_ARTIFACT,-Repository%20namespace%20name) event type.
+- Support **`Artifact pulled`** option - [PULL_ARTIFACT](https://goharbor.io/docs/2.7.0/working-with-projects/project-configuration/configure-webhooks/#:~:text=artifact%20from%20registry-,PULL_ARTIFACT,-Repository%20namespace%20name) event type.
+- Support **`Artifact deleted`** option - [DELETE_ARTIFACT](https://goharbor.io/docs/2.7.0/working-with-projects/project-configuration/configure-webhooks/#:~:text=artifact%20from%20registry-,DELETE_ARTIFACT,-Repository%20namespace%20name) event type.
 - Support **`Chart uploaded`** option - [UPLOAD_CHART](https://goharbor.io/docs/2.7.0/working-with-projects/project-configuration/configure-webhooks/#:~:text=chart%20to%20chartMuseum-,UPLOAD_CHART,-Repository%20name%2C%20chart) event type.
-- Support **`Chart uploaded`** option - [DOWNLOAD_CHART](https://goharbor.io/docs/2.7.0/working-with-projects/project-configuration/configure-webhooks/#:~:text=chart%20from%20chartMuseum-,DOWNLOAD_CHART,-Repository%20name%2C%20chart) event type.
-- Support **`Artifact pushed`** option - [DELETE_CHART](https://goharbor.io/docs/2.7.0/working-with-projects/project-configuration/configure-webhooks/#:~:text=chart%20from%20chartMuseum-,DELETE_CHART,-Repository%20name%2C%20chart) event type.
-- Support **`Artifact pushed`** option - [QUOTA_EXCEED](https://goharbor.io/docs/2.7.0/working-with-projects/project-configuration/configure-webhooks/#:~:text=Project%20quota%20exceeded-,QUOTA_EXCEED,-Repository%20namespace%20name) event type.
-- Support **`Chart uploaded`** option - [QUOTA_WARNING](https://goharbor.io/docs/2.7.0/working-with-projects/project-configuration/configure-webhooks/#:~:text=quota%20near%20threshold-,QUOTA_WARNING,-Repository%20namespace%20name) event type.
+- Support **`Chart downloaded`** option - [DOWNLOAD_CHART](https://goharbor.io/docs/2.7.0/working-with-projects/project-configuration/configure-webhooks/#:~:text=chart%20from%20chartMuseum-,DOWNLOAD_CHART,-Repository%20name%2C%20chart) event type.
+- Support **`Chart deleted`** option - [DELETE_CHART](https://goharbor.io/docs/2.7.0/working-with-projects/project-configuration/configure-webhooks/#:~:text=chart%20from%20chartMuseum-,DELETE_CHART,-Repository%20name%2C%20chart) event type.
+- Support **`Quota exceed`** option - [QUOTA_EXCEED](https://goharbor.io/docs/2.7.0/working-with-projects/project-configuration/configure-webhooks/#:~:text=Project%20quota%20exceeded-,QUOTA_EXCEED,-Repository%20namespace%20name) event type.
+- Support **`Quota near threshold`** option - [QUOTA_WARNING](https://goharbor.io/docs/2.7.0/working-with-projects/project-configuration/configure-webhooks/#:~:text=quota%20near%20threshold-,QUOTA_WARNING,-Repository%20namespace%20name) event type.
 
 ## Getting started
 
