@@ -73,10 +73,46 @@ Harbor event notifications for Telegram.
         • Tag: latest
         ```
 
+        ```text
+        🐳 Artifact pulled by: admin
+        • Host: hub.harbor.com
+        • Project: test-webhook
+        • Access: public
+        • Repository: test-webhook/debian
+        • Tag: latest
+        ```
+
+        ```text
+        ❗️ Attention!
+        🐳 Artifact removed by: admin
+        • Host: hub.harbor.com
+        • Project: test-webhook
+        • Repository: test-webhook/debian
+        • Tag: latest
+        ```
+
     - Helm Chart (CHART)
 
         ```text
         ☸️ New chart version uploaded by: admin
+        • Host: hub.harbor.com
+        • Project: test-webhook
+        • Chart: test-webhook/debian
+        • Version: latest
+        ```
+
+        ```text
+        ☸️ Chart pulled by: admin
+        • Host: hub.harbor.com
+        • Project: test-webhook
+        • Access: public
+        • Chart: debian
+        • Version: 0.1.0
+        ```
+
+        ```text
+        ❗️ Attention!
+        ☸️ Chart removed by: admin
         • Host: hub.harbor.com
         • Project: test-webhook
         • Chart: test-webhook/debian
