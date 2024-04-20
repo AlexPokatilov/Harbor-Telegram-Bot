@@ -112,7 +112,7 @@ func formatMessage(payload WebhookPayload) string {
 		message += fmt.Sprintf("• Repository: <b>%s</b>\n", repo.RepoFullName)
 		message += fmt.Sprintf("• Tag: <b>%s</b>", resource.Tag)
 	case "DELETE_ARTIFACT":
-		message = fmt.Sprintf("❗️ Attention! Artifact removed by: <b>%s</b>\n", payload.Operator)
+		message = fmt.Sprintf("❗️ Attention!\n🐳 Artifact removed by: <b>%s</b>\n", payload.Operator)
 		message += fmt.Sprintf("• Host: <a href=\"%s\">%s</a>\n", harborLink, harborURL)
 		message += fmt.Sprintf("• Project: <b>%s</b>\n", repo.Namespace)
 		message += fmt.Sprintf("• Repository: <b>%s</b>\n", repo.RepoFullName)
@@ -131,7 +131,7 @@ func formatMessage(payload WebhookPayload) string {
 		message += fmt.Sprintf("• Chart: <b>%s</b>\n", repo.Name)
 		message += fmt.Sprintf("• Version: <b>%s</b>", resource.Tag)
 	case "DELETE_CHART":
-		message = fmt.Sprintf("❗️ Attention! Chart removed by: <b>%s</b>\n", payload.Operator)
+		message = fmt.Sprintf("❗️ Attention!\n☸️ Chart removed by: <b>%s</b>\n", payload.Operator)
 		message += fmt.Sprintf("• Host: <a href=\"%s\">%s</a>\n", harborChartLink, harborChartURL)
 		message += fmt.Sprintf("• Project: <b>%s</b>\n", repo.Namespace)
 		message += fmt.Sprintf("• Chart: <b>%s</b>\n", repo.Name)
