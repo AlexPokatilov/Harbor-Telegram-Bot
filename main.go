@@ -99,7 +99,12 @@ func init() {
 	debugEnv := os.Getenv("DEBUG")
 	Debug = strings.ToLower(debugEnv) == "true"
 }
-
+var Warn bool
+func init() {
+	// Читаємо WARN_ON_PUSH з env
+	warnEnv := os.Getenv("WARN_ON_PUSH")
+	Warn = strings.ToLower(warnEnv) == "true"
+}
 // ================= INIT BOT =================
 func initTelegramBot() {
 	var err error
@@ -117,32 +122,6 @@ func initTelegramBot() {
 	bot.Debug = debugModeBool
 	log.Printf("OK! Connected to telegram bot account: https://t.me/%s", bot.Self.UserName)
 }
-
-// ================= HELPERS =================
-func extractDomain(resourceURL string) string {
-	start := strings.Index(resourceURL, "//")
-	if start == -1 {
-		return ""
-	}
-
-	start += 2
-	end := strings.Index(resourceURL[start:], "/")
-	if end == -1 {
-		return resourceURL[start:]
-	}
-
-	return resourceURL[start : start+end]
-}
-
-func toJSONPretty(v interface{}) string {
-	prettyJSON, err := json.MarshalIndent(v, "", "  ")
-	if err != nil {
-		log.Printf("Error when marshalling to pretty JSON: %v", err)
-		return ""
-	}
-	return string(prettyJSON)
-}
-
 
 // ================= HARBOR API =================
 func getQuota(artifact HarborArtifact) (*Quota, error){
@@ -212,7 +191,6 @@ func calcQuotaUsage(used, hard int64) QuotaInfo {
     return QuotaInfo{TotalMB: totalMB, UsedMB:  usedMB, Percent: percent, Warning: warning, }
 }
 
-// getArtifact виконує GET-запит і повертає параметр type та tags.Name
 func getArtifact(resource Resource, repo Repository) (HarborArtifact, error) {
 	var artifact HarborArtifact
 	hostUrl := os.Getenv("HOST") // -e HOST='http://nginx:8080'
@@ -238,7 +216,7 @@ func getArtifact(resource Resource, repo Repository) (HarborArtifact, error) {
 
 	body, err := io.ReadAll(resp.Body)
 	if Debug { //= Обмежуємо запис в лог по змінній
-		log.Printf("\nDEBUG: raw API_RESPONSE body:\n %s\n", string(body))
+		log.Printf("DEBUG: ARTIFACT_RESPONSE body:\n %s\n", string(body))
 	}
 
 	if err != nil {
@@ -252,12 +230,11 @@ func getArtifact(resource Resource, repo Repository) (HarborArtifact, error) {
 		log.Printf("ERROR: failed to unmarshal artifact response: %v", err)
 	}
 
-	if Debug { log.Printf("\nDEBUG: Artifact type: %s, tag: %v, quota: %d", artifact.Type, artifact.Tags[0].Name, artifact.ProjectId) }
+	if Debug { log.Printf("DEBUG: Artifact type:\ntype: %s, tag: %v, quota_id: %d\n", artifact.Type, artifact.Tags[0].Name, artifact.ProjectId) }
 	return artifact, nil
 }
 
 // ================= TELEGRAM =================
-
 func formatMessage(payload WebhookPayload, artifact HarborArtifact, qu QuotaInfo, hostUrl string) string {
 	var (
     resource   Resource
@@ -276,10 +253,8 @@ func formatMessage(payload WebhookPayload, artifact HarborArtifact, qu QuotaInfo
 		harborURL = strings.Split(resource.ResourceURL, "/")[0]
 		harborLink = fmt.Sprintf("https://%s/harbor/projects", harborURL)
 	}
-
-	if Debug { log.Printf("DEBUG in formatMessage: artifact=%+v", artifact) }
-	//log.Printf("\nCheck into formatMessage: Artifact type: %s, tag: %v", artifactType, artifactTag)
-
+	if Debug { log.Printf("DEBUG: func formatMessage():\nartifact body: %+v\n", artifact) }
+	
 	var message string
 	switch payload.Type {
 	case "PUSH_ARTIFACT":
@@ -295,7 +270,7 @@ func formatMessage(payload WebhookPayload, artifact HarborArtifact, qu QuotaInfo
 		message += fmt.Sprintf("• Project: <b>%s</b>\n", repo.Namespace)
 		message += fmt.Sprintf("• Repository: <b>%s</b>\n", repo.RepoFullName)
 		message += fmt.Sprintf("• Tag: <b>%s</b>\n", resource.Tag)
-		if qu.Warning == "w" {
+		if qu.Warning == "w" && Warn {
 			message += "\n&#9888; Warning!! Quota usage reach 85%!!\n"
 			message += fmt.Sprintf("• Details: <b>quota usage reach %.2f%%: resource storage used %.2f MB of %.2f MB</b>\n", qu.Percent, qu.UsedMB, qu.TotalMB)
 		}
@@ -361,17 +336,24 @@ func handleWebhook(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "ERROR!!! Only POST method is allowed.", http.StatusMethodNotAllowed)
 		return
 	}
-
-	var payload WebhookPayload
-	decoder := json.NewDecoder(r.Body)
-	if err := decoder.Decode(&payload); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	// Читаємо тіло запиту
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "ERROR!!! Failed to read request body", http.StatusInternalServerError)
 		return
 	}
 	defer r.Body.Close()
+	// Логування raw JSON
+	if Debug {
+		log.Printf("DEBUG: WEBHOOK_REQUEST body:\n%s\n", string(body))
+	}
 
-	// логування HTTP_REQUEST від HarborWebHook
-	if Debug {	log.Printf("\nDEBUG: raw HTTP_REQUEST body:\n %s\n", decoder) }
+	// Декодуємо payload
+	var payload WebhookPayload
+	if err := json.Unmarshal(body, &payload); err != nil {
+		http.Error(w, "ERROR!!! Invalid JSON", http.StatusBadRequest)
+		return
+	}
 
 	chatIdStr := os.Getenv("CHAT_ID")
 	chatIdInt, err := strconv.ParseInt(chatIdStr, 10, 64)
@@ -389,7 +371,7 @@ func handleWebhook(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Отримуємо type з Harbor API
+	// Отримуємо artifact з Harbor API
 	var artifact HarborArtifact
 	var qu QuotaInfo
 	hostUrl := os.Getenv("HOST")
@@ -403,15 +385,15 @@ func handleWebhook(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				log.Printf("ERROR!!! Failed to get artifact type: %v", err)
 			}
-			//==
-			quota, err := getQuota(artifact)
-			if err != nil {
-				log.Printf("Error getting quota: %v", err)
-				return
+			if payload.Type == "PUSH_ARTIFACT" && Warn {
+				quota, err := getQuota(artifact)
+				if err != nil {
+					log.Printf("Error getting quota: %v", err)
+					return
+				}
+				qu = calcQuotaUsage(quota.Used.Storage, quota.Hard.Storage)
+				if Debug { fmt.Printf("DEBUG: Quota Info:\n Total: %.2f MB, Used: %.2f MB, Percent: %.2f%%, Flag: %s\n", qu.TotalMB, qu.UsedMB, qu.Percent, qu.Warning)}
 			}
-			qu = calcQuotaUsage(quota.Used.Storage, quota.Hard.Storage)
-			if Debug { fmt.Printf("DEBUG: Quota Total: %.2f MB, Used: %.2f MB, Percent: %.2f%%, Flag: %s\n", qu.TotalMB, qu.UsedMB, qu.Percent, qu.Warning)}
-			//==
 		}
 	default:
 		log.Printf("Skipping event type: %s", payload.Type)
