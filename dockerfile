@@ -18,4 +18,4 @@ ENV BOT_TOKEN=
 ENV DEBUG=false
 
 EXPOSE 441:441
-CMD ["update-ca-certificates && /app/harbor-telegram-bot"]
+CMD ["update-ca-certificates" "&&" "/app/harbor-telegram-bot"]
