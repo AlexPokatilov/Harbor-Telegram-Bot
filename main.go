@@ -145,8 +145,7 @@ func getQuota(artifact HarborArtifact) (*Quota, error){
     if err != nil {
         return nil, fmt.Errorf("failed to execute request: %v", err)
     }
-    //defer resp.Body.Close()
-	defer func() {
+    defer func() {
 		if cerr := resp.Body.Close(); cerr != nil {
 			log.Printf("WARN: failed to close getQuota response body: %v", cerr)
 		}
@@ -217,7 +216,6 @@ func getArtifact(resource Resource, repo Repository) (HarborArtifact, error) {
 	if err != nil {
 		return artifact, fmt.Errorf("GET request failed: %v", err)
 	}
-//	defer resp.Body.Close()
 	defer func() {
 		if cerr := resp.Body.Close(); cerr != nil {
 			log.Printf("WARN: failed to close getArtifact response body: %v", cerr)
@@ -348,7 +346,6 @@ func handleWebhook(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "ERROR!!! Failed to read request body", http.StatusInternalServerError)
 		return
 	}
-//	defer r.Body.Close()
 	defer func() {
 		if cerr := r.Body.Close(); cerr != nil {
 			log.Printf("WARN: failed to close handleWebhook response body: %v", cerr)
@@ -387,7 +384,7 @@ func handleWebhook(w http.ResponseWriter, r *http.Request) {
 	var qu QuotaInfo
 	hostUrl := os.Getenv("HOST")
 	switch payload.Type {
-	case "PUSH_ARTIFACT", "PULL_ARTIFACT"://, "DELETE_ARTIFACT", "QUOTA_EXCEED", "QUOTA_WARNING":
+	case "PUSH_ARTIFACT", "PULL_ARTIFACT":
 		if len(payload.EventData.Resources) > 0 {
 			resource := payload.EventData.Resources[0]
 			repo := payload.EventData.Repository
