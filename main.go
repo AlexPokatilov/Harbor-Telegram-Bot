@@ -125,7 +125,7 @@ func initTelegramBot() {
 
 // ================= HARBOR API =================
 func getQuota(artifact HarborArtifact) (*Quota, error){
-	hostUrl := os.Getenv("HOST")
+	hostUrl := os.Getenv("HARBOR_URL")
 	user := os.Getenv("HARBOR_USER")
     pass := os.Getenv("HARBOR_PASS")
 	url := fmt.Sprintf(
@@ -197,7 +197,7 @@ func calcQuotaUsage(used, hard int64) QuotaInfo {
 
 func getArtifact(resource Resource, repo Repository) (HarborArtifact, error) {
 	var artifact HarborArtifact
-	hostUrl := os.Getenv("HOST") // -e HOST='http://nginx:8080'
+	hostUrl := os.Getenv("HARBOR_URL") // -e HOST='http://nginx:8080'
 	username := os.Getenv("HARBOR_USER") // логін
 	password := os.Getenv("HARBOR_PASS") // пароль
 	url := fmt.Sprintf(
@@ -382,7 +382,7 @@ func handleWebhook(w http.ResponseWriter, r *http.Request) {
 	// Отримуємо artifact з Harbor API
 	var artifact HarborArtifact
 	var qu QuotaInfo
-	hostUrl := os.Getenv("HOST")
+	hostUrl := os.Getenv("HARBOR_URL")
 	switch payload.Type {
 	case "PUSH_ARTIFACT", "PULL_ARTIFACT":
 		if len(payload.EventData.Resources) > 0 {
