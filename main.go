@@ -125,12 +125,12 @@ func initTelegramBot() {
 
 // ================= HARBOR API =================
 func getQuota(artifact HarborArtifact) (*Quota, error){
-	hostUrl := os.Getenv("HARBOR_URL")
+	harborHostUrl := os.Getenv("HARBOR_URL")
 	user := os.Getenv("HARBOR_USER")
     pass := os.Getenv("HARBOR_PASS")
 	url := fmt.Sprintf(
 		"%s/api/v2.0/quotas?reference=project&reference_id=%d",
-		hostUrl,
+		harborHostUrl,
 		artifact.ProjectId,
 	)
     req, err := http.NewRequest("GET", url, nil)
@@ -197,12 +197,12 @@ func calcQuotaUsage(used, hard int64) QuotaInfo {
 
 func getArtifact(resource Resource, repo Repository) (HarborArtifact, error) {
 	var artifact HarborArtifact
-	hostUrl := os.Getenv("HARBOR_URL") // -e HOST='http://nginx:8080'
+	harborHostUrl := os.Getenv("HARBOR_URL") // -e HOST='http://nginx:8080'
 	username := os.Getenv("HARBOR_USER") // логін
 	password := os.Getenv("HARBOR_PASS") // пароль
 	url := fmt.Sprintf(
 		"%s/api/v2.0/projects/%s/repositories/%s/artifacts/%s",
-		hostUrl, repo.Namespace, repo.Name,	resource.Digest,
+		harborHostUrl, repo.Namespace, repo.Name,	resource.Digest,
 	)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -243,7 +243,7 @@ func getArtifact(resource Resource, repo Repository) (HarborArtifact, error) {
 }
 
 // ================= TELEGRAM =================
-func formatMessage(payload WebhookPayload, artifact HarborArtifact, qu QuotaInfo, hostUrl string) string {
+func formatMessage(payload WebhookPayload, artifact HarborArtifact, qu QuotaInfo, harborHostUrl string) string {
 	var (
     resource   Resource
     repo       Repository
@@ -306,12 +306,12 @@ func formatMessage(payload WebhookPayload, artifact HarborArtifact, qu QuotaInfo
 		message += fmt.Sprintf("• Tag: <b>%s</b>", resource.Tag)
 	case "QUOTA_WARNING":
 		message = "&#9888; Warning!! Quota usage reach 85%!!\n"
-		message += fmt.Sprintf("• Host: <a href=\"%s\">%s</a>\n", fmt.Sprintf("%s/harbor/projects", hostUrl), hostUrl)
+		message += fmt.Sprintf("• Host: <a href=\"%s\">%s</a>\n", fmt.Sprintf("%s/harbor/projects", harborHostUrl), harborHostUrl)
 		message += fmt.Sprintf("• Project: <b>%s</b>\n", payload.EventData.Repository.Namespace)
 		message += fmt.Sprintf("• Details: <b>%s</b>\n", payload.EventData.Attributes.Details)
 	case "QUOTA_EXCEED":
-		message = "&#128680; Alert!!! Project quota has been exceed!!!\n"
-		message += fmt.Sprintf("• Host: <a href=\"%s\">%s</a>\n", fmt.Sprintf("%s/harbor/projects", hostUrl), hostUrl)
+		message = "&#128680; Alert!!! Project quota has been exceeded!!!\n"
+		message += fmt.Sprintf("• Host: <a href=\"%s\">%s</a>\n", fmt.Sprintf("%s/harbor/projects", harborHostUrl), harborHostUrl)
 		message += fmt.Sprintf("• Project: <b>%s</b>\n", payload.EventData.Repository.Namespace)
 		message += fmt.Sprintf("• Details: <b>%s</b>\n", payload.EventData.Attributes.Details)
 	default:
@@ -382,7 +382,7 @@ func handleWebhook(w http.ResponseWriter, r *http.Request) {
 	// Отримуємо artifact з Harbor API
 	var artifact HarborArtifact
 	var qu QuotaInfo
-	hostUrl := os.Getenv("HARBOR_URL")
+	harborHostUrl := os.Getenv("HARBOR_URL")
 	switch payload.Type {
 	case "PUSH_ARTIFACT", "PULL_ARTIFACT":
 		if len(payload.EventData.Resources) > 0 {
@@ -408,7 +408,7 @@ func handleWebhook(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Формуємо повідомлення
-	message := formatMessage(payload, artifact, qu, hostUrl)
+	message := formatMessage(payload, artifact, qu, harborHostUrl)
 	sendTelegramMessage(SendMessageParams{
 		ChatID:  chatIdInt,
 		Message: message,
