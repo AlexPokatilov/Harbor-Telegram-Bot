@@ -145,7 +145,12 @@ func getQuota(artifact HarborArtifact) (*Quota, error){
     if err != nil {
         return nil, fmt.Errorf("failed to execute request: %v", err)
     }
-    defer resp.Body.Close()
+    //defer resp.Body.Close()
+	defer func() {
+		if cerr := resp.Body.Close(); cerr != nil {
+			log.Printf("WARN: failed to close getQuota response body: %v", cerr)
+		}
+	}()
 
     if resp.StatusCode != http.StatusOK {
         body, _ := io.ReadAll(resp.Body)
@@ -212,7 +217,12 @@ func getArtifact(resource Resource, repo Repository) (HarborArtifact, error) {
 	if err != nil {
 		return artifact, fmt.Errorf("GET request failed: %v", err)
 	}
-	defer resp.Body.Close()
+//	defer resp.Body.Close()
+	defer func() {
+		if cerr := resp.Body.Close(); cerr != nil {
+			log.Printf("WARN: failed to close getArtifact response body: %v", cerr)
+		}
+	}()
 
 	body, err := io.ReadAll(resp.Body)
 	if Debug { //= Обмежуємо запис в лог по змінній
@@ -258,12 +268,13 @@ func formatMessage(payload WebhookPayload, artifact HarborArtifact, qu QuotaInfo
 	var message string
 	switch payload.Type {
 	case "PUSH_ARTIFACT":
-		if artifact.Type == "IMAGE" {
-		message = fmt.Sprintf("&#128051; New image pushed by: <b>%s</b>\n", payload.Operator)
-		} else if artifact.Type == "CHART" {
-		message = fmt.Sprintf("&#9784; New chart pushed by: <b>%s</b>\n", payload.Operator)
-		} else {
-		message = fmt.Sprintf("&#128230; New artifact pushed by: <b>%s</b>\n", payload.Operator)
+		switch artifact.Type {
+		case "IMAGE":
+			message = fmt.Sprintf("&#128051; New image pushed by: <b>%s</b>\n", payload.Operator)
+		case "CHART":
+			message = fmt.Sprintf("&#9784; New chart pushed by: <b>%s</b>\n", payload.Operator)
+		default:
+			message = fmt.Sprintf("&#128230; New artifact pushed by: <b>%s</b>\n", payload.Operator)
 		}
 		message += fmt.Sprintf("• Host: <a href=\"%s\">%s</a>\n", harborLink, harborURL)
 		message += fmt.Sprintf("• Access: <b>%s</b>\n", repo.RepoType)
@@ -275,12 +286,13 @@ func formatMessage(payload WebhookPayload, artifact HarborArtifact, qu QuotaInfo
 			message += fmt.Sprintf("• Details: <b>quota usage reach %.2f%%: resource storage used %.2f MB of %.2f MB</b>\n", qu.Percent, qu.UsedMB, qu.TotalMB)
 		}
 	case "PULL_ARTIFACT":
-		if artifact.Type == "IMAGE" {
-		message = fmt.Sprintf("&#128051; Image pulled by: <b>%s</b>\n", payload.Operator)
-		} else if artifact.Type == "CHART" {
-		message = fmt.Sprintf("&#9784; Chart pulled by: <b>%s</b>\n", payload.Operator)
-		} else {
-		message = fmt.Sprintf("&#128230; Artifact pulled by: <b>%s</b>\n", payload.Operator)
+		switch artifact.Type {
+		case "IMAGE":
+			message = fmt.Sprintf("&#128051; Image pulled by: <b>%s</b>\n", payload.Operator)
+		case "CHART":
+			message = fmt.Sprintf("&#9784; Chart pulled by: <b>%s</b>\n", payload.Operator)
+		default:
+			message = fmt.Sprintf("&#128230; Artifact pulled by: <b>%s</b>\n", payload.Operator)
 		}
 		message += fmt.Sprintf("• Host: <a href=\"%s\">%s</a>\n", harborLink, harborURL)
 		message += fmt.Sprintf("• Access: <b>%s</b>\n", repo.RepoType)
@@ -288,13 +300,7 @@ func formatMessage(payload WebhookPayload, artifact HarborArtifact, qu QuotaInfo
 		message += fmt.Sprintf("• Repository: <b>%s</b>\n", repo.RepoFullName)
 		message += fmt.Sprintf("• Tag: <b>%s</b>", artifact.Tags[0].Name)
 	case "DELETE_ARTIFACT":
-		if artifact.Type == "IMAGE" {
-		message = fmt.Sprintf("&#10071; Attention!\n&#128051; Image removed by: <b>%s</b>\n", payload.Operator)
-		} else if artifact.Type == "CHART" {
-		message = fmt.Sprintf("&#10071; Attention!\n&#9784; Chart removed by: <b>%s</b>\n", payload.Operator)
-		} else {
 		message = fmt.Sprintf("&#10071; Attention!\n&#128230; Artifact removed by: <b>%s</b>\n", payload.Operator)
-		}
 		message += fmt.Sprintf("• Host: <a href=\"%s\">%s</a>\n", harborLink, harborURL)
 		message += fmt.Sprintf("• Access: <b>%s</b>\n", repo.RepoType)
 		message += fmt.Sprintf("• Project: <b>%s</b>\n", repo.Namespace)
@@ -342,7 +348,12 @@ func handleWebhook(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "ERROR!!! Failed to read request body", http.StatusInternalServerError)
 		return
 	}
-	defer r.Body.Close()
+//	defer r.Body.Close()
+	defer func() {
+		if cerr := r.Body.Close(); cerr != nil {
+			log.Printf("WARN: failed to close handleWebhook response body: %v", cerr)
+		}
+	}()
 	// Логування raw JSON
 	if Debug {
 		log.Printf("DEBUG: WEBHOOK_REQUEST body:\n%s\n", string(body))
