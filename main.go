@@ -197,9 +197,9 @@ func calcQuotaUsage(used, hard int64) QuotaInfo {
 
 func getArtifact(resource Resource, repo Repository) (HarborArtifact, error) {
 	var artifact HarborArtifact
-	harborHostUrl := os.Getenv("HARBOR_URL") // -e HOST='http://nginx:8080'
-	username := os.Getenv("HARBOR_USER") // логін
-	password := os.Getenv("HARBOR_PASS") // пароль
+	harborHostUrl := os.Getenv("HARBOR_URL") // url // -e HOST='http://nginx:8080'
+	username := os.Getenv("HARBOR_USER") // login
+	password := os.Getenv("HARBOR_PASS") // password
 	url := fmt.Sprintf(
 		"%s/api/v2.0/projects/%s/repositories/%s/artifacts/%s",
 		harborHostUrl, repo.Namespace, repo.Name,	resource.Digest,
