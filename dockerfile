@@ -1,5 +1,5 @@
 # Stage 1
-FROM golang:1.24 as builder
+FROM golang:1.24 as build
 WORKDIR /app
 
 COPY go.mod ./
@@ -8,7 +8,7 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o harbor-telegram-bot .
 
 # Stage 2
-FROM alpine:3 as bot
+FROM alpine:3
 
 RUN apk --no-cache add ca-certificates
 COPY --from=builder /app/harbor-telegram-bot /app/
@@ -18,4 +18,4 @@ ENV BOT_TOKEN=
 ENV DEBUG=false
 
 EXPOSE 441:441
-CMD ["/app/harbor-telegram-bot"]
+CMD ["update-ca-certificates && /app/harbor-telegram-bot"]
