@@ -11,7 +11,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o harbor-telegram-b
 FROM alpine:3
 
 RUN apk --no-cache add ca-certificates
-COPY --from=builder /app/harbor-telegram-bot /app/
+COPY --from=build /app/harbor-telegram-bot /app/
 
 ENV CHAT_ID=
 ENV BOT_TOKEN=
