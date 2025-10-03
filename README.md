@@ -50,7 +50,7 @@ Harbor event notifications for Telegram.
         -e CHAT_ID=<chat-id>
         -e BOT_TOKEN=<bot-api-token>
         -e TOPIC_ID=<topic-id>
-        -e HARBOR_URL=<harbor-url>
+        -e HARBOR_URL=<harbor-url> # https://hub.harbor.com
         -e HARBOR_USER=<harbor-user>
         -e HARBOR_PASS=<harbor-pass>
         -v /<certs-path>:/usr/local/share/ca-certificates #for custom ca certificates
