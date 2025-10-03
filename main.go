@@ -6,6 +6,7 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -262,6 +263,10 @@ func formatMessage(payload WebhookPayload, artifact HarborArtifact, qu QuotaInfo
 		harborLink = fmt.Sprintf("https://%s/harbor/projects", harborURL)
 	}
 	if Debug { log.Printf("DEBUG: func formatMessage():\nartifact body: %+v\n", artifact) }
+
+	u, err := url.Parse(harborHostUrl)
+	if err != nil {	panic(err) }
+	harborHost := u.Host 
 	
 	var message string
 	switch payload.Type {
@@ -306,12 +311,12 @@ func formatMessage(payload WebhookPayload, artifact HarborArtifact, qu QuotaInfo
 		message += fmt.Sprintf("• Tag: <b>%s</b>", resource.Tag)
 	case "QUOTA_WARNING":
 		message = "&#9888; Warning!! Quota usage reach 85%!!\n"
-		message += fmt.Sprintf("• Host: <a href=\"%s\">%s</a>\n", fmt.Sprintf("%s/harbor/projects", harborHostUrl), harborHostUrl)
+		message += fmt.Sprintf("• Host: <a href=\"%s\">%s</a>\n", fmt.Sprintf("%s/harbor/projects", harborHostUrl), harborHost)
 		message += fmt.Sprintf("• Project: <b>%s</b>\n", payload.EventData.Repository.Namespace)
 		message += fmt.Sprintf("• Details: <b>%s</b>\n", payload.EventData.Attributes.Details)
 	case "QUOTA_EXCEED":
 		message = "&#128680; Alert!!! Project quota has been exceeded!!!\n"
-		message += fmt.Sprintf("• Host: <a href=\"%s\">%s</a>\n", fmt.Sprintf("%s/harbor/projects", harborHostUrl), harborHostUrl)
+		message += fmt.Sprintf("• Host: <a href=\"%s\">%s</a>\n", fmt.Sprintf("%s/harbor/projects", harborHostUrl), harborHost)
 		message += fmt.Sprintf("• Project: <b>%s</b>\n", payload.EventData.Repository.Namespace)
 		message += fmt.Sprintf("• Details: <b>%s</b>\n", payload.EventData.Attributes.Details)
 	default:
