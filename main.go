@@ -286,7 +286,7 @@ func formatMessage(payload WebhookPayload, artifact HarborArtifact, qu QuotaInfo
 		message += fmt.Sprintf("• Tag: <b>%s</b>\n", resource.Tag)
 		if qu.Warning == "w" && Warn {
 			message += "\n&#9888; Warning!! Quota usage reach 85%!!\n"
-			message += fmt.Sprintf("• Details: <b>quota usage reach %.2f%%: resource storage used %.2f MB of %.2f MB</b>\n", qu.Percent, qu.UsedMB, qu.TotalMB)
+			message += fmt.Sprintf("• Details: <i>quota usage reach %.2f%%: resource storage used %.2f MB of %.2f MB</i>\n", qu.Percent, qu.UsedMB, qu.TotalMB)
 		}
 	case "PULL_ARTIFACT":
 		switch artifact.Type {
@@ -313,12 +313,12 @@ func formatMessage(payload WebhookPayload, artifact HarborArtifact, qu QuotaInfo
 		message = "&#9888; Warning!! Quota usage reach 85%!!\n"
 		message += fmt.Sprintf("• Host: <a href=\"%s\">%s</a>\n", fmt.Sprintf("%s/harbor/projects", harborHostUrl), harborHost)
 		message += fmt.Sprintf("• Project: <b>%s</b>\n", payload.EventData.Repository.Namespace)
-		message += fmt.Sprintf("• Details: <b>%s</b>\n", payload.EventData.Attributes.Details)
+		message += fmt.Sprintf("• Details: <i>%s</i>\n", payload.EventData.Attributes.Details)
 	case "QUOTA_EXCEED":
 		message = "&#128680; Alert!!! Project quota has been exceeded!!!\n"
 		message += fmt.Sprintf("• Host: <a href=\"%s\">%s</a>\n", fmt.Sprintf("%s/harbor/projects", harborHostUrl), harborHost)
 		message += fmt.Sprintf("• Project: <b>%s</b>\n", payload.EventData.Repository.Namespace)
-		message += fmt.Sprintf("• Details: <b>%s</b>\n", payload.EventData.Attributes.Details)
+		message += fmt.Sprintf("• Details: <i>%s</i>\n", payload.EventData.Attributes.Details)
 	default:
 		message = "&#9888; Received an unknown event type."
 	}
