@@ -57,7 +57,6 @@ type HarborArtifact struct {
     Type string `json:"type"`
 	ProjectId int `json:"project_id"`
     Tags []ApiTag `json:"tags"`
-	// можна додати інші блоки за необхідності
 }
 // ==== Quota ====
 type Quota struct {
@@ -69,11 +68,11 @@ type Quota struct {
     } `json:"ref"`
     Hard struct {
         Storage int64 `json:"storage"`
-        Count   int64 `json:"count,omitempty"` // може не бути
+        Count   int64 `json:"count,omitempty"`
     } `json:"hard"`
     Used struct {
         Storage int64 `json:"storage"`
-        Count   int64 `json:"count,omitempty"` // може не бути
+        Count   int64 `json:"count,omitempty"`
     } `json:"used"`
     CreationTime string `json:"creation_time,omitempty"`
     UpdateTime   string `json:"update_time,omitempty"`
@@ -83,7 +82,7 @@ type QuotaInfo struct {
     TotalMB   float64
     UsedMB    float64
     Percent   float64
-    Warning   string // "w"-Попередження //"n"-нормас
+    Warning   string
 }
 // ==== For Telegram send ====
 type SendMessageParams struct {
@@ -96,13 +95,11 @@ var bot *tgbotapi.BotAPI
 
 var Debug bool
 func init() {
-	// Читаємо DEBUG з env
 	debugEnv := os.Getenv("DEBUG")
 	Debug = strings.ToLower(debugEnv) == "true"
 }
 var Warn bool
 func init() {
-	// Читаємо WARN_ON_PUSH з env
 	warnEnv := os.Getenv("WARN_ON_PUSH")
 	Warn = strings.ToLower(warnEnv) == "true"
 }
@@ -209,9 +206,8 @@ func getArtifact(resource Resource, repo Repository) (HarborArtifact, error) {
 	if err != nil {
 		return artifact, fmt.Errorf("failed to create request: %v", err)
 	}
-	// Додаємо BasicAuth
+	// BasicAuth
 	req.SetBasicAuth(username, password)
-	// Виконуємо
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -224,7 +220,7 @@ func getArtifact(resource Resource, repo Repository) (HarborArtifact, error) {
 	}()
 
 	body, err := io.ReadAll(resp.Body)
-	if Debug { //= Обмежуємо запис в лог по змінній
+	if Debug {
 		log.Printf("DEBUG: ARTIFACT_RESPONSE body:\n %s\n", string(body))
 	}
 
@@ -345,7 +341,7 @@ func handleWebhook(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "ERROR!!! Only POST method is allowed.", http.StatusMethodNotAllowed)
 		return
 	}
-	// Читаємо тіло запиту
+	// Read the request body
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "ERROR!!! Failed to read request body", http.StatusInternalServerError)
@@ -356,12 +352,12 @@ func handleWebhook(w http.ResponseWriter, r *http.Request) {
 			log.Printf("WARN: failed to close handleWebhook response body: %v", cerr)
 		}
 	}()
-	// Логування raw JSON
+	// Logging raw JSON
 	if Debug {
 		log.Printf("DEBUG: WEBHOOK_REQUEST body:\n%s\n", string(body))
 	}
 
-	// Декодуємо payload
+	// Decode the payload
 	var payload WebhookPayload
 	if err := json.Unmarshal(body, &payload); err != nil {
 		http.Error(w, "ERROR!!! Invalid JSON", http.StatusBadRequest)
@@ -384,7 +380,7 @@ func handleWebhook(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Отримуємо artifact з Harbor API
+	// Get artifact from Harbor API
 	var artifact HarborArtifact
 	var qu QuotaInfo
 	harborHostUrl := os.Getenv("HARBOR_URL")
@@ -412,7 +408,7 @@ func handleWebhook(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Skipping event type: %s", payload.Type)
 	}
 
-	// Формуємо повідомлення
+	// Form the message
 	message := formatMessage(payload, artifact, qu, harborHostUrl)
 	sendTelegramMessage(SendMessageParams{
 		ChatID:  chatIdInt,
