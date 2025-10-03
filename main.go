@@ -3,21 +3,27 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
+	"io"
 )
 
+// ================= STRUCTS =================
+// ==== Webhook ====
+type Attributes struct {
+	Details		string `json:"Details"`
+}
 // Resource represents the resource associated with the event
 type Resource struct {
 	Digest      string `json:"digest"`
 	Tag         string `json:"tag"`
 	ResourceURL string `json:"resource_url"`
 }
-
 // Repository displays information about the repository
 type Repository struct {
 	DateCreated  int64  `json:"date_created"`
@@ -26,13 +32,12 @@ type Repository struct {
 	RepoFullName string `json:"repo_full_name"`
 	RepoType     string `json:"repo_type"`
 }
-
 // EventData contains event details
 type EventData struct {
 	Resources  []Resource `json:"resources"`
 	Repository Repository `json:"repository"`
+	Attributes Attributes `json:"custom_attributes"`
 }
-
 // WebhookPayload represents the body of the webhook request
 type WebhookPayload struct {
 	Type      string    `json:"type"`
@@ -40,15 +45,65 @@ type WebhookPayload struct {
 	Operator  string    `json:"operator"`
 	EventData EventData `json:"event_data"`
 }
-
+// ==== Artifact ====
+// ApiTag represents the structure of the "tags" element.
+type ApiTag struct {
+    ID int `json:"id"`
+    Immutable bool `json:"immutable"`
+    Name string `json:"name"`
+}
+// HarborArtifact represents the main structure of the JSON response.
+type HarborArtifact struct {
+    Type string `json:"type"`
+	ProjectId int `json:"project_id"`
+    Tags []ApiTag `json:"tags"`
+}
+// ==== Quota ====
+type Quota struct {
+    ID     int `json:"id"`
+    Ref    struct {
+        ID        int    `json:"id"`
+        Name      string `json:"name"`
+        OwnerName string `json:"owner_name"`
+    } `json:"ref"`
+    Hard struct {
+        Storage int64 `json:"storage"`
+        Count   int64 `json:"count,omitempty"`
+    } `json:"hard"`
+    Used struct {
+        Storage int64 `json:"storage"`
+        Count   int64 `json:"count,omitempty"`
+    } `json:"used"`
+    CreationTime string `json:"creation_time,omitempty"`
+    UpdateTime   string `json:"update_time,omitempty"`
+}
+// ==== for calc Quota ====
+type QuotaInfo struct {
+    TotalMB   float64
+    UsedMB    float64
+    Percent   float64
+    Warning   string
+}
+// ==== For Telegram send ====
 type SendMessageParams struct {
 	ChatID  int64
 	Message string
 	TopicID *int64
 }
-
+// ================= GLOBAL =================
 var bot *tgbotapi.BotAPI
 
+var Debug bool
+func init() {
+	debugEnv := os.Getenv("DEBUG")
+	Debug = strings.ToLower(debugEnv) == "true"
+}
+var Warn bool
+func init() {
+	warnEnv := os.Getenv("WARN_ON_PUSH")
+	Warn = strings.ToLower(warnEnv) == "true"
+}
+// ================= INIT BOT =================
 func initTelegramBot() {
 	var err error
 	bot, err = tgbotapi.NewBotAPI(os.Getenv("BOT_TOKEN"))
@@ -56,180 +111,318 @@ func initTelegramBot() {
 		log.Panic(err)
 	}
 
-	debugModeStr := os.Getenv("DEBUG") //true - hide data, false - show data
+	debugModeStr := os.Getenv("DEBUG")
 	debugModeBool, err := strconv.ParseBool(debugModeStr)
 	if err != nil {
-		log.Printf("ERROR!!! When converting DEBUG to bool: %v", err)
-		return
+		debugModeBool = false
 	}
 
 	bot.Debug = debugModeBool
 	log.Printf("OK! Connected to telegram bot account: https://t.me/%s", bot.Self.UserName)
 }
 
-func extractDomain(resourceURL string) string {
-	start := strings.Index(resourceURL, "//") // Find the index where the double slashes begin "//"
-	if start == -1 {
-		return "" // URL does not contain "//"
-	}
+// ================= HARBOR API =================
+func getQuota(artifact HarborArtifact) (*Quota, error){
+	harborHostUrl := os.Getenv("HARBOR_URL")
+	user := os.Getenv("HARBOR_USER")
+    pass := os.Getenv("HARBOR_PASS")
+	url := fmt.Sprintf(
+		"%s/api/v2.0/quotas?reference=project&reference_id=%d",
+		harborHostUrl,
+		artifact.ProjectId,
+	)
+    req, err := http.NewRequest("GET", url, nil)
+    if err != nil {
+        return nil, fmt.Errorf("failed to create request: %v", err)
+    }
 
-	start += 2                                     // Index shift beyond limits "//"
-	end := strings.Index(resourceURL[start:], "/") // Find the index of the first slash "/" after "//"
-	if end == -1 {
-		return resourceURL[start:] // URL does not contain an extra "/"
-	}
+    req.SetBasicAuth(user, pass)
 
-	return resourceURL[start : start+end] // Return the substring between start and end
+    client := &http.Client{}
+    resp, err := client.Do(req)
+    if err != nil {
+        return nil, fmt.Errorf("failed to execute request: %v", err)
+    }
+    defer func() {
+		if cerr := resp.Body.Close(); cerr != nil {
+			log.Printf("WARN: failed to close getQuota response body: %v", cerr)
+		}
+	}()
+
+    if resp.StatusCode != http.StatusOK {
+        body, _ := io.ReadAll(resp.Body)
+        return nil, fmt.Errorf("unexpected status: %d, body: %s", resp.StatusCode, string(body))
+    }
+
+    body, err := io.ReadAll(resp.Body)
+    if err != nil {
+        return nil, fmt.Errorf("failed to read response body: %v", err)
+    }
+
+    var quotas []Quota
+    if err := json.Unmarshal(body, &quotas); err != nil {
+        return nil, fmt.Errorf("failed to parse quota JSON: %v", err)
+    }
+
+    if len(quotas) == 0 {
+        return nil, fmt.Errorf("no quota info returned for project %d", artifact.ProjectId)
+    }
+
+    return &quotas[0], nil
 }
 
-func formatMessage(payload WebhookPayload) string {
-	// Checking if resources are available in the payload
-	if len(payload.EventData.Resources) == 0 {
-		return "WARNING!! Webhook Event Received, but no resources are available."
+func calcQuotaUsage(used, hard int64) QuotaInfo {
+    if hard <= 0 {
+        return QuotaInfo{
+            TotalMB:  0,
+            UsedMB:   float64(used) / (1024 * 1024),
+            Percent:  0,
+            Warning:  "n",
+        }
+    }
+
+    totalMB := float64(hard) / (1024 * 1024)
+    usedMB := float64(used) / (1024 * 1024)
+    percent := (usedMB / totalMB) * 100
+
+    warning := "n"
+    if percent > 85 {
+        warning = "w"
+    }
+
+    return QuotaInfo{TotalMB: totalMB, UsedMB:  usedMB, Percent: percent, Warning: warning, }
+}
+
+func getArtifact(resource Resource, repo Repository) (HarborArtifact, error) {
+	var artifact HarborArtifact
+	harborHostUrl := os.Getenv("HARBOR_URL") // url // -e HOST='http://nginx:8080'
+	username := os.Getenv("HARBOR_USER") // login
+	password := os.Getenv("HARBOR_PASS") // password
+	url := fmt.Sprintf(
+		"%s/api/v2.0/projects/%s/repositories/%s/artifacts/%s",
+		harborHostUrl, repo.Namespace, repo.Name,	resource.Digest,
+	)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return artifact, fmt.Errorf("failed to create request: %v", err)
+	}
+	// BasicAuth
+	req.SetBasicAuth(username, password)
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return artifact, fmt.Errorf("GET request failed: %v", err)
+	}
+	defer func() {
+		if cerr := resp.Body.Close(); cerr != nil {
+			log.Printf("WARN: failed to close getArtifact response body: %v", cerr)
+		}
+	}()
+
+	body, err := io.ReadAll(resp.Body)
+	if Debug {
+		log.Printf("DEBUG: ARTIFACT_RESPONSE body:\n %s\n", string(body))
 	}
 
-	resource := payload.EventData.Resources[0] // We use the first resource
-	repo := payload.EventData.Repository
+	if err != nil {
+		log.Printf("ERROR: failed to read response body: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		log.Printf("ERROR: unexpected status code: %d, body: %s", resp.StatusCode, string(body))
+	}	
+		
+	if err := json.Unmarshal(body, &artifact); err != nil {
+		log.Printf("ERROR: failed to unmarshal artifact response: %v", err)
+	}
 
-	harborURL := strings.Split(resource.ResourceURL, "/")[0]
-	harborLink := fmt.Sprintf("https://%s/harbor/projects", harborURL)
-	harborChartURL := extractDomain(resource.ResourceURL)
-	harborChartLink := fmt.Sprintf("https://%s/harbor/projects", harborChartURL)
+	if Debug { log.Printf("DEBUG: Artifact type:\ntype: %s, tag: %v, quota_id: %d\n", artifact.Type, artifact.Tags[0].Name, artifact.ProjectId) }
+	return artifact, nil
+}
 
+// ================= TELEGRAM =================
+func formatMessage(payload WebhookPayload, artifact HarborArtifact, qu QuotaInfo, harborHostUrl string) string {
+	var (
+    resource   Resource
+    repo       Repository
+    harborURL  string
+    harborLink string
+	)
+	switch payload.Type {
+	case "PUSH_ARTIFACT", "PULL_ARTIFACT", "DELETE_ARTIFACT", "QUOTA_WARNING":
+		if len(payload.EventData.Resources) == 0 {
+			log.Printf("&#9888; Webhook Event Received, but no resources are available.")
+			return ""
+		}
+		resource = payload.EventData.Resources[0]
+		repo = payload.EventData.Repository
+		harborURL = strings.Split(resource.ResourceURL, "/")[0]
+		harborLink = fmt.Sprintf("https://%s/harbor/projects", harborURL)
+	}
+	if Debug { log.Printf("DEBUG: func formatMessage():\nartifact body: %+v\n", artifact) }
+
+	u, err := url.Parse(harborHostUrl)
+	if err != nil {	panic(err) }
+	harborHost := u.Host 
+	
 	var message string
 	switch payload.Type {
 	case "PUSH_ARTIFACT":
-		message = fmt.Sprintf("🐳 New artifact pushed by: <b>%s</b>\n", payload.Operator)
+		switch artifact.Type {
+		case "IMAGE":
+			message = fmt.Sprintf("&#128051; New image pushed by: <b>%s</b>\n", payload.Operator)
+		case "CHART":
+			message = fmt.Sprintf("&#9784; New chart pushed by: <b>%s</b>\n", payload.Operator)
+		default:
+			message = fmt.Sprintf("&#128230; New artifact pushed by: <b>%s</b>\n", payload.Operator)
+		}
 		message += fmt.Sprintf("• Host: <a href=\"%s\">%s</a>\n", harborLink, harborURL)
+		message += fmt.Sprintf("• Access: <b>%s</b>\n", repo.RepoType)
 		message += fmt.Sprintf("• Project: <b>%s</b>\n", repo.Namespace)
 		message += fmt.Sprintf("• Repository: <b>%s</b>\n", repo.RepoFullName)
-		message += fmt.Sprintf("• Tag: <b>%s</b>", resource.Tag)
+		message += fmt.Sprintf("• Tag: <b>%s</b>\n", resource.Tag)
+		if qu.Warning == "w" && Warn {
+			message += "\n&#9888; Warning!! Quota usage reach 85%!!\n"
+			message += fmt.Sprintf("• Details: <i>quota usage reach %.2f%%: resource storage used %.2f MB of %.2f MB</i>\n", qu.Percent, qu.UsedMB, qu.TotalMB)
+		}
 	case "PULL_ARTIFACT":
-		message = fmt.Sprintf("🐳 Artifact pulled by: <b>%s</b>\n", payload.Operator)
+		switch artifact.Type {
+		case "IMAGE":
+			message = fmt.Sprintf("&#128051; Image pulled by: <b>%s</b>\n", payload.Operator)
+		case "CHART":
+			message = fmt.Sprintf("&#9784; Chart pulled by: <b>%s</b>\n", payload.Operator)
+		default:
+			message = fmt.Sprintf("&#128230; Artifact pulled by: <b>%s</b>\n", payload.Operator)
+		}
 		message += fmt.Sprintf("• Host: <a href=\"%s\">%s</a>\n", harborLink, harborURL)
-		message += fmt.Sprintf("• Project: <b>%s</b>\n", repo.Namespace)
 		message += fmt.Sprintf("• Access: <b>%s</b>\n", repo.RepoType)
+		message += fmt.Sprintf("• Project: <b>%s</b>\n", repo.Namespace)
 		message += fmt.Sprintf("• Repository: <b>%s</b>\n", repo.RepoFullName)
-		message += fmt.Sprintf("• Tag: <b>%s</b>", resource.Tag)
+		message += fmt.Sprintf("• Tag: <b>%s</b>", artifact.Tags[0].Name)
 	case "DELETE_ARTIFACT":
-		message = fmt.Sprintf("❗️ Attention!\n🐳 Artifact removed by: <b>%s</b>\n", payload.Operator)
+		message = fmt.Sprintf("&#10071; Attention!\n&#128230; Artifact removed by: <b>%s</b>\n", payload.Operator)
 		message += fmt.Sprintf("• Host: <a href=\"%s\">%s</a>\n", harborLink, harborURL)
+		message += fmt.Sprintf("• Access: <b>%s</b>\n", repo.RepoType)
 		message += fmt.Sprintf("• Project: <b>%s</b>\n", repo.Namespace)
 		message += fmt.Sprintf("• Repository: <b>%s</b>\n", repo.RepoFullName)
 		message += fmt.Sprintf("• Tag: <b>%s</b>", resource.Tag)
-	case "UPLOAD_CHART":
-		message = fmt.Sprintf("☸️ New chart pushed by: <b>%s</b>\n", payload.Operator)
-		message += fmt.Sprintf("• Host: <a href=\"%s\">%s</a>\n", harborChartLink, harborChartURL)
-		message += fmt.Sprintf("• Project: <b>%s</b>\n", repo.Namespace)
-		message += fmt.Sprintf("• Chart: <b>%s</b>\n", repo.Name)
-		message += fmt.Sprintf("• Version: <b>%s</b>", resource.Tag)
-	case "DOWNLOAD_CHART":
-		message = fmt.Sprintf("☸️ Chart pulled by: <b>%s</b>\n", payload.Operator)
-		message += fmt.Sprintf("• Host: <a href=\"%s\">%s</a>\n", harborChartLink, harborChartURL)
-		message += fmt.Sprintf("• Project: <b>%s</b>\n", repo.Namespace)
-		message += fmt.Sprintf("• Access: <b>%s</b>\n", repo.RepoType)
-		message += fmt.Sprintf("• Chart: <b>%s</b>\n", repo.Name)
-		message += fmt.Sprintf("• Version: <b>%s</b>", resource.Tag)
-	case "DELETE_CHART":
-		message = fmt.Sprintf("❗️ Attention!\n☸️ Chart removed by: <b>%s</b>\n", payload.Operator)
-		message += fmt.Sprintf("• Host: <a href=\"%s\">%s</a>\n", harborChartLink, harborChartURL)
-		message += fmt.Sprintf("• Project: <b>%s</b>\n", repo.Namespace)
-		message += fmt.Sprintf("• Chart: <b>%s</b>\n", repo.Name)
-		message += fmt.Sprintf("• Version: <b>%s</b>", resource.Tag)
-	case "QUOTA_EXCEED":
-		message = "🚨 Alert!!! Project quota has been exceed!!!\n"
-		message += fmt.Sprintf("• Project: <b>%s</b>\n", repo.Namespace)
 	case "QUOTA_WARNING":
-		message = "⚠️ Warning!! Quota usage reach 85%!!\n"
-		message += fmt.Sprintf("• Project: <b>%s</b>\n", repo.Namespace)
+		message = "&#9888; Warning!! Quota usage reach 85%!!\n"
+		message += fmt.Sprintf("• Host: <a href=\"%s\">%s</a>\n", fmt.Sprintf("%s/harbor/projects", harborHostUrl), harborHost)
+		message += fmt.Sprintf("• Project: <b>%s</b>\n", payload.EventData.Repository.Namespace)
+		message += fmt.Sprintf("• Details: <i>%s</i>\n", payload.EventData.Attributes.Details)
+	case "QUOTA_EXCEED":
+		message = "&#128680; Alert!!! Project quota has been exceeded!!!\n"
+		message += fmt.Sprintf("• Host: <a href=\"%s\">%s</a>\n", fmt.Sprintf("%s/harbor/projects", harborHostUrl), harborHost)
+		message += fmt.Sprintf("• Project: <b>%s</b>\n", payload.EventData.Repository.Namespace)
+		message += fmt.Sprintf("• Details: <i>%s</i>\n", payload.EventData.Attributes.Details)
 	default:
-		message = "WARNING!! Received an unknown event type."
+		message = "&#9888; Received an unknown event type."
 	}
 
 	return message
 }
 
-func toJSONPretty(v interface{}) string {
-	prettyJSON, err := json.MarshalIndent(v, "", "  ")
-	if err != nil {
-		log.Printf("Error when marshalling to pretty JSON: %v", err)
-		return ""
-	}
-	return string(prettyJSON)
-}
-
 func sendTelegramMessage(params SendMessageParams) {
 	msg := tgbotapi.NewMessage(params.ChatID, params.Message)
-
 	if params.TopicID != nil {
 		msg.ReplyToMessageID = int(*params.TopicID)
 	}
-
 	msg.ParseMode = "HTML"
-	response, err := bot.Send(msg) // Sending a message
+
+	_, err := bot.Send(msg)
 	if err != nil {
 		log.Printf("Error when sending message: %v", err)
-	} else {
-		log.Printf("Endpoint: sendMessage, params: map[chat_id:%d parse_mode:HTML text:\n%s]\n", params.ChatID, params.Message)
-		// Using toJSONPretty to format the response in pretty JSON
-		prettyJSON := toJSONPretty(response)
-		log.Printf("Endpoint: sendMessage, response:\n%s\n", prettyJSON)
 	}
 }
 
+// ================= HANDLER =================
 func handleWebhook(w http.ResponseWriter, r *http.Request) {
-	// Check for a POST request
 	if r.Method != "POST" {
 		http.Error(w, "ERROR!!! Only POST method is allowed.", http.StatusMethodNotAllowed)
 		return
 	}
-
-	// Decode the JSON from the request body
-	var payload WebhookPayload
-	decoder := json.NewDecoder(r.Body)
-	if err := decoder.Decode(&payload); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	// Read the request body
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "ERROR!!! Failed to read request body", http.StatusInternalServerError)
 		return
 	}
-	defer r.Body.Close()
+	defer func() {
+		if cerr := r.Body.Close(); cerr != nil {
+			log.Printf("WARN: failed to close handleWebhook response body: %v", cerr)
+		}
+	}()
+	// Logging raw JSON
+	if Debug {
+		log.Printf("DEBUG: WEBHOOK_REQUEST body:\n%s\n", string(body))
+	}
+
+	// Decode the payload
+	var payload WebhookPayload
+	if err := json.Unmarshal(body, &payload); err != nil {
+		http.Error(w, "ERROR!!! Invalid JSON", http.StatusBadRequest)
+		return
+	}
 
 	chatIdStr := os.Getenv("CHAT_ID")
 	chatIdInt, err := strconv.ParseInt(chatIdStr, 10, 64)
 	if err != nil {
-		log.Printf("ERROR!!! When converting chat ID to int64: %v", err)
+		log.Printf("ERROR!!! When converting chat ID: %v", err)
 		return
 	}
 
 	topicIDStr := os.Getenv("TOPIC_ID")
-	var topicIDPtr *int64 // Use pointer types to support optionality
-
+	var topicIDPtr *int64
 	if topicIDStr != "" {
 		topicID, err := strconv.ParseInt(topicIDStr, 10, 64)
-		if err != nil {
-			log.Printf("ERROR!!! When converting topic ID to int64: %v\", err", err)
-			return
+		if err == nil {
+			topicIDPtr = &topicID
 		}
-		topicIDPtr = &topicID
 	}
 
-	// Forming and sending a message in Telegram
-	message := formatMessage(payload) // Using formatMessage to create a message
+	// Get artifact from Harbor API
+	var artifact HarborArtifact
+	var qu QuotaInfo
+	harborHostUrl := os.Getenv("HARBOR_URL")
+	switch payload.Type {
+	case "PUSH_ARTIFACT", "PULL_ARTIFACT":
+		if len(payload.EventData.Resources) > 0 {
+			resource := payload.EventData.Resources[0]
+			repo := payload.EventData.Repository
+
+			artifact, err = getArtifact(resource, repo)
+			if err != nil {
+				log.Printf("ERROR!!! Failed to get artifact type: %v", err)
+			}
+			if payload.Type == "PUSH_ARTIFACT" && Warn {
+				quota, err := getQuota(artifact)
+				if err != nil {
+					log.Printf("Error getting quota: %v", err)
+					return
+				}
+				qu = calcQuotaUsage(quota.Used.Storage, quota.Hard.Storage)
+				if Debug { fmt.Printf("DEBUG: Quota Info:\n Total: %.2f MB, Used: %.2f MB, Percent: %.2f%%, Flag: %s\n", qu.TotalMB, qu.UsedMB, qu.Percent, qu.Warning)}
+			}
+		}
+	default:
+		log.Printf("Skipping event type: %s", payload.Type)
+	}
+
+	// Form the message
+	message := formatMessage(payload, artifact, qu, harborHostUrl)
 	sendTelegramMessage(SendMessageParams{
 		ChatID:  chatIdInt,
 		Message: message,
 		TopicID: topicIDPtr,
 	})
 
-	// Response to request
 	w.WriteHeader(http.StatusOK)
-	if _, err := w.Write([]byte("OK! Webhook received.")); err != nil {
-		log.Printf("ERROR!!! Failed to write response: %v", err)
-		return
-	}
+	_, _ = w.Write([]byte("OK! Webhook received."))
 }
 
+// ================= MAIN =================
 func main() {
-	initTelegramBot() // Initialize the Telegram bot
+	initTelegramBot()
 	http.HandleFunc("/webhook-bot", handleWebhook)
 	log.Fatal(http.ListenAndServe(":441", nil))
 }
