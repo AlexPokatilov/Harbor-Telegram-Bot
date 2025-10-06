@@ -279,7 +279,7 @@ func formatMessage(payload WebhookPayload, artifact HarborArtifact, qu QuotaInfo
 		message += fmt.Sprintf("• Access: <b>%s</b>\n", repo.RepoType)
 		message += fmt.Sprintf("• Project: <b>%s</b>\n", repo.Namespace)
 		message += fmt.Sprintf("• Repository: <b>%s</b>\n", repo.RepoFullName)
-		message += fmt.Sprintf("• Tag: <b>%s</b>\n", resource.Tag)
+		message += fmt.Sprintf("• Tag: <b>%s</b>\n", artifact.Tags[0].Name)
 		if qu.Warning == "w" && Warn {
 			message += "\n&#9888; Warning!! Quota usage reach 85%!!\n"
 			message += fmt.Sprintf("• Details: <i>quota usage reach %.2f%%: resource storage used %.2f MB of %.2f MB</i>\n", qu.Percent, qu.UsedMB, qu.TotalMB)
