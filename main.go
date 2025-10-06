@@ -103,6 +103,11 @@ func init() {
 	warnEnv := os.Getenv("WARN_ON_PUSH")
 	Warn = strings.ToLower(warnEnv) == "true"
 }
+var ShaTag bool
+func init() {
+	shatagEnv := os.Getenv("SHA_TAG")
+	ShaTag = strings.ToLower(shatagEnv) == "true"
+}
 // ================= INIT BOT =================
 func initTelegramBot() {
 	var err error
@@ -257,6 +262,10 @@ func formatMessage(payload WebhookPayload, artifact HarborArtifact, qu QuotaInfo
 		repo = payload.EventData.Repository
 		harborURL = strings.Split(resource.ResourceURL, "/")[0]
 		harborLink = fmt.Sprintf("https://%s/harbor/projects", harborURL)
+		if !ShaTag && artifact.Type == "CHART" {
+			log.Printf("STOP message: webhook digest == tag:\n tag=%s\n", resource.Tag)
+			return ""
+		}
 	}
 	if Debug { log.Printf("DEBUG: func formatMessage():\nartifact body: %+v\n", artifact) }
 
