@@ -7,6 +7,11 @@
 
 Harbor event notifications for Telegram.
 
+## Release 3.1.0
+
+- Filter SHA digest tag notifications — Harbor 2.8+ fires an interim webhook with a `sha256:...` tag when pushing OCI Helm artifacts before renaming to the real tag. Bot now silently drops these to prevent duplicate notifications.
+- Updated Go runtime to 1.26.
+
 ## Release 3.0.0
 
 - Support **`Artifact pushed`** option - [PUSH_ARTIFACT](https://goharbor.io/docs/2.13.0/working-with-projects/project-configuration/configure-webhooks/#:~:text=artifact%20to%20registry-,PUSH_ARTIFACT,-Repository%20namespace%20name) event type.
@@ -54,10 +59,11 @@ Harbor event notifications for Telegram.
         -e HARBOR_USER=<harbor-user>
         -e HARBOR_PASS=<harbor-pass>
         -v /<certs-path>:/usr/local/share/ca-certificates #for custom ca certificates
-        alexpokatilov/harbor-telegram-bot:3.0.0
+        alexpokatilov/harbor-telegram-bot:3.1.0
     ```
     Set `-e WARN_ON_PUSH=true`, if you want to see usage quota warning with push event.
     Set `-e DEBUG=true`, if you want to see all logs with raw format.
+    Set `-e FILTER_SHA_TAGS=false`, to disable filtering of SHA digest tag notifications (enabled by default).
 
 2. Configure your Harbor `http` webhook
 
