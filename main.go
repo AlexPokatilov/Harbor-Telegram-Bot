@@ -103,6 +103,12 @@ func init() {
 	warnEnv := os.Getenv("WARN_ON_PUSH")
 	Warn = strings.ToLower(warnEnv) == "true"
 }
+var FilterSHATags bool
+func init() {
+	filterEnv := os.Getenv("FILTER_SHA_TAGS")
+	// Default true — filter SHA tags unless explicitly set to "false"
+	FilterSHATags = strings.ToLower(filterEnv) != "false"
+}
 // ================= INIT BOT =================
 func initTelegramBot() {
 	var err error
@@ -191,6 +197,10 @@ func calcQuotaUsage(used, hard int64) QuotaInfo {
     }
 
     return QuotaInfo{TotalMB: totalMB, UsedMB:  usedMB, Percent: percent, Warning: warning, }
+}
+
+func isSHATag(tag string) bool {
+	return strings.HasPrefix(tag, "sha256:")
 }
 
 func getArtifact(resource Resource, repo Repository) (HarborArtifact, error) {
@@ -362,6 +372,18 @@ func handleWebhook(w http.ResponseWriter, r *http.Request) {
 	if err := json.Unmarshal(body, &payload); err != nil {
 		http.Error(w, "ERROR!!! Invalid JSON", http.StatusBadRequest)
 		return
+	}
+
+	// Filter SHA digest tags (Harbor 2.8+ fires interim webhook before renaming artifact)
+	if FilterSHATags && len(payload.EventData.Resources) > 0 {
+		tag := payload.EventData.Resources[0].Tag
+		if isSHATag(tag) {
+			log.Printf("INFO: SHA tag filtered — repo: %s, tag: %s",
+				payload.EventData.Repository.RepoFullName, tag)
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte("OK! SHA tag filtered."))
+			return
+		}
 	}
 
 	chatIdStr := os.Getenv("CHAT_ID")
